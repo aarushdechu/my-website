@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery — Aarush Dechu</title>
+  <meta name="description" content="Art, origami, piano, and coding projects by Aarush." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="gallery.html" aria-current="page">Gallery</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a class="nav-feature" href="math.html">Quadratic</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">🖼️ My gallery</span>
+        <h2>Things I've made</h2>
+        <p>Swap the picture boxes for real photos when you're ready — see the note below.</p>
+      </div>
+
+      <p class="note" style="margin-bottom:26px">
+        <b>To add a real photo:</b> put the image file in the <b>images</b> folder, then
+        replace a <code>&lt;div class="thumb"&gt;…&lt;/div&gt;</code> with
+        <code>&lt;img class="thumb" src="images/your-photo.jpg" alt="what it is"&gt;</code>.
+      </p>
+
+      <div class="grid">
+        <article class="card">
+          <div class="thumb">🕊️</div>
+          <div class="body"><h3>Paper crane set</h3><p class="desc">My cleanest folds yet — wings line up perfectly.</p></div>
+        </article>
+        <article class="card">
+          <div class="thumb">🎨</div>
+          <div class="body"><h3>Sunset painting</h3><p class="desc">Acrylic, lots of orange. Took me three afternoons.</p></div>
+        </article>
+        <article class="card">
+          <div class="thumb">🐉</div>
+          <div class="body"><h3>Origami dragon</h3><p class="desc">The hardest one I've folded. So many steps!</p></div>
+        </article>
+        <article class="card">
+          <div class="thumb">🎹</div>
+          <div class="body"><h3>Piano recital</h3><p class="desc">A piece I performed this spring. Video coming soon.</p></div>
+        </article>
+        <article class="card">
+          <div class="thumb">💻</div>
+          <div class="body"><h3>My first game</h3><p class="desc">A little coding project. Press space to jump!</p></div>
+        </article>
+        <article class="card">
+          <div class="thumb">✏️</div>
+          <div class="body"><h3>Sketchbook page</h3><p class="desc">Doodles and characters I drew on the bus.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Made with paper, pixels, and hot chocolate by Aarush.</span>
+      <span>© <span data-year>2026</span> Aarush Dechu</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

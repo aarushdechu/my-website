@@ -1,0 +1,12 @@
+# Local secrets
+js/quadratic-local-config.js
+
+# Operating system files
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/
+
+# Logs
+*.log

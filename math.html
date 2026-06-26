@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadratic — Aarush Lab</title>
+  <meta name="description" content="Quadratic is Aarush's AI math coach for algebra, counting, sequences, probability, and geometry." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a class="nav-feature" href="math.html" aria-current="page">Quadratic</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <section class="quadratic-hero">
+    <div class="wrap quadratic-hero-grid">
+      <div>
+        <span class="eyebrow">AI math coach</span>
+        <h1>Meet <span>Quadratic</span>.</h1>
+        <p class="lead">A sharper math space for Aarush to practice algebra, counting, number theory, sequences, probability, and circle geometry.</p>
+      </div>
+      <div class="formula-card" aria-hidden="true">
+        <span>x² + bx + c</span>
+        <strong>Think. Try. Explain.</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="section quadratic-section">
+    <div class="wrap quadratic-grid">
+      <aside class="coach-panel">
+        <span class="eyebrow">Coach mode</span>
+        <h2>Built for contest practice</h2>
+        <p>Quadratic keeps answers clear and step-by-step, with a local brain plus optional OpenAI power.</p>
+
+        <div class="coach-badges" aria-label="Quadratic focus areas">
+          <span>RSM honors-plus</span>
+          <span>AMC-8</span>
+          <span>MATHCOUNTS</span>
+          <span>AIME stretch</span>
+          <span>Algebra</span>
+          <span>Circles</span>
+        </div>
+      </aside>
+
+      <section class="quadratic-chat-card" aria-label="Quadratic chat">
+        <div class="chat-topbar">
+          <div>
+            <span class="eyebrow">Quadratic</span>
+            <h2>Ask a math question</h2>
+          </div>
+          <span class="status-dot">Ready</span>
+        </div>
+
+        <div id="math-chat" class="math-chat" aria-live="polite">
+          <article class="math-message bot">
+            <strong>Quadratic</strong>
+            <p>Send me a problem. I can coach through it step by step.</p>
+          </article>
+        </div>
+
+        <div class="prompt-chips" aria-label="Sample questions">
+          <button class="chip" type="button" data-question="Solve 3x + 7 = 25">3x + 7 = 25</button>
+          <button class="chip" type="button" data-question="How many ways to arrange 5 books?">5 books</button>
+          <button class="chip" type="button" data-question="What is the area of a circle with radius 6?">Circle r = 6</button>
+          <button class="chip" type="button" data-question="Find the next number in 3, 6, 12, 24">Sequence</button>
+        </div>
+
+        <form id="math-form" class="math-form">
+          <label for="math-question">Question</label>
+          <div class="ask-row">
+            <textarea id="math-question" rows="3" placeholder="Type a math question here..."></textarea>
+            <button class="btn btn--coral" type="submit">Ask</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Made with paper, pixels, and hot chocolate by Aarush.</span>
+      <span>© <span data-year>2026</span> Aarush Dechu</span>
+    </div>
+  </footer>
+
+  <script src="js/quadratic-config.js"></script>
+  <script src="js/quadratic-local-config.js"></script>
+  <script src="js/math-brain.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
