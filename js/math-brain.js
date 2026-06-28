@@ -1,4 +1,6 @@
 (function () {
+    let lastAnswerSource = "not asked yet";
+
     const profile = {
         name: "Aarush",
         strengths: "algebra",
@@ -265,6 +267,11 @@
 
     function answerLinear(question) {
         const equation = question.toLowerCase().replace(/\s+/g, "").replace(/−/g, "-");
+
+        if (equation.includes("x^2") || equation.includes("x²")) {
+            return null;
+        }
+
         const match = equation.match(/([+-]?\d*\.?\d*)x([+-]\d+\.?\d*)?=([+-]?\d+\.?\d*)/);
 
         if (!match) {
@@ -291,24 +298,29 @@
         ].join("\n");
     }
 
-    function answerQuadratic(question) {
-        const equation = question.toLowerCase().replace(/\s+/g, "").replace(/\*\*/g, "^");
+    function normalizeEquationText(question) {
+        return question
+            .toLowerCase()
+            .replace(/−/g, "-")
+            .replace(/²/g, "^2")
+            .replace(/\*\*/g, "^")
+            .replace(/\s+/g, "")
+            .replace(/=o/g, "=0");
+    }
 
-        if (!equation.includes("x^2") || !equation.includes("=")) {
+    function parseQuadratic(question) {
+        const compact = normalizeEquationText(question);
+        const match = compact.match(/([+-]?\d*\.?\d*x\^2(?:[+-]\d*\.?\d*x)?(?:[+-]\d+\.?\d*)?)=([+-]?\d+\.?\d*)/);
+
+        if (!match) {
             return null;
         }
 
-        const parts = equation.split("=");
-        const left = parts[0];
-        const right = parts[1];
-
-        if (right.includes("x")) {
-            return "I see a quadratic. First move every term to one side so it equals 0, then send it again.";
-        }
-
+        const left = match[1];
+        const right = Number(match[2]);
         let a = 0;
         let b = 0;
-        let c = -Number(right || 0);
+        let c = -right;
         const terms = left.match(/[+-]?[^+-]+/g) || [];
 
         terms.forEach((term) => {
@@ -321,14 +333,89 @@
             }
         });
 
-        if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c) || a === 0) {
+        if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c) || !Number.isFinite(right) || a === 0) {
             return null;
         }
 
+        return {
+            a,
+            b,
+            c,
+            display: `${left}=${match[2]}`
+        };
+    }
+
+    function answerRootExpression(question) {
+        const text = question.toLowerCase();
+        const quadratic = parseQuadratic(question);
+
+        if (!quadratic || !/(root|roots)/.test(text) || !/r/.test(text) || !/s/.test(text)) {
+            return null;
+        }
+
+        if (!/(r\^2|r²)/.test(text) || !/(s\^2|s²)/.test(text)) {
+            return null;
+        }
+
+        const { a, b, c, display } = quadratic;
+        const rootSum = -b / a;
+        const rootProduct = c / a;
+        const answer = rootSum * rootSum - 2 * rootProduct;
+
+        return [
+            `Yes. Let's do it step by step without finding the roots directly.`,
+            "",
+            `Problem: ${display} has roots r and s. Find r^2 + s^2.`,
+            "",
+            `Plan: Use Vieta's formulas.`,
+            `For ax^2 + bx + c = 0:`,
+            `r + s = -b/a`,
+            `rs = c/a`,
+            "",
+            `Step 1: Identify a, b, and c.`,
+            `a = ${formatNumber(a)}, b = ${formatNumber(b)}, c = ${formatNumber(c)}`,
+            "",
+            `Step 2: Find r + s.`,
+            `r + s = -b/a = -(${formatNumber(b)})/${formatNumber(a)} = ${formatNumber(rootSum)}`,
+            "",
+            `Step 3: Find rs.`,
+            `rs = c/a = ${formatNumber(c)}/${formatNumber(a)} = ${formatNumber(rootProduct)}`,
+            "",
+            `Step 4: Rewrite r^2 + s^2 using something we know.`,
+            `(r + s)^2 = r^2 + 2rs + s^2`,
+            `So r^2 + s^2 = (r + s)^2 - 2rs`,
+            "",
+            `Step 5: Substitute.`,
+            `r^2 + s^2 = (${formatNumber(rootSum)})^2 - 2(${formatNumber(rootProduct)})`,
+            `r^2 + s^2 = ${formatNumber(rootSum * rootSum)} - ${formatNumber(2 * rootProduct)}`,
+            "",
+            `Answer: ${formatNumber(answer)}`
+        ].join("\n");
+    }
+
+    function answerQuadratic(question) {
+        const quadratic = parseQuadratic(question);
+
+        if (!quadratic) {
+            return null;
+        }
+
+        const { a, b, c } = quadratic;
         const discriminant = b * b - 4 * a * c;
 
         if (discriminant < 0) {
-            return `The discriminant is ${formatNumber(discriminant)}, so there are no real-number solutions.`;
+            return [
+                `This is a quadratic, so use the quadratic formula.`,
+                "",
+                `Step 1: Identify a, b, and c.`,
+                `a = ${formatNumber(a)}, b = ${formatNumber(b)}, c = ${formatNumber(c)}`,
+                "",
+                `Step 2: Compute the discriminant.`,
+                `b^2 - 4ac = (${formatNumber(b)})^2 - 4(${formatNumber(a)})(${formatNumber(c)}) = ${formatNumber(discriminant)}`,
+                "",
+                `Since the discriminant is negative, the roots are complex, not real.`,
+                `If your problem asks for an expression involving the roots, Vieta's formulas may still work.`
+            ].join("\n");
         }
 
         const rootOne = (-b + Math.sqrt(discriminant)) / (2 * a);
@@ -436,6 +523,17 @@
             return null;
         }
 
+        if (
+            nums.length > 1 ||
+            /(tangent|secant|chord|segment|intersect|external|point|passes|touches)/.test(text)
+        ) {
+            return null;
+        }
+
+        if (!/(area|circumference)/.test(text)) {
+            return null;
+        }
+
         const given = nums[0];
         const radius = text.includes("diameter") ? given / 2 : given;
         const area = Math.PI * radius * radius;
@@ -510,86 +608,84 @@
         return window.QuadraticAIConfig || {};
     }
 
-    function hasApiKey(config) {
-        return config.apiKey && config.apiKey !== "PASTE_YOUR_OPENAI_API_KEY_HERE";
-    }
-
-    function getResponseText(data) {
-        if (data.output_text) {
-            return data.output_text;
+    function formatConversation(history) {
+        if (!Array.isArray(history) || history.length === 0) {
+            return "No earlier messages in this chat.";
         }
 
-        if (!Array.isArray(data.output)) {
-            return "";
-        }
-
-        return data.output
-            .flatMap((item) => item.content || [])
-            .filter((content) => content.type === "output_text" && content.text)
-            .map((content) => content.text)
-            .join("\n")
-            .trim();
+        return history
+            .map((message) => `${message.role === "user" ? "Aarush" : "Quadratic"}: ${message.content}`)
+            .join("\n\n");
     }
 
-    async function askOpenAI(question, localHint) {
+    function getSystemPrompt() {
         const config = getConfig();
 
-        if (!config.useOpenAI) {
+        return config.systemPrompt || [
+            "You are Quadratic, a clear and encouraging math coach for Aarush Dechu.",
+            "Explain slowly and step by step.",
+            "If Aarush asks for a specific method, follow that method.",
+            "Remember and use the conversation history."
+        ].join(" ");
+    }
+
+    function shouldUseAI(config) {
+        return config.useAI && config.apiProxyUrl;
+    }
+
+    async function askPythonBackend(question, localHint, history) {
+        const config = getConfig();
+
+        if (!shouldUseAI(config) || !config.apiProxyUrl) {
             return null;
         }
 
-        if (config.apiProxyUrl) {
-            const proxyResponse = await fetch(config.apiProxyUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    question,
-                    localHint,
-                    student: profile
-                })
-            });
-
-            if (!proxyResponse.ok) {
-                throw new Error(`Proxy request failed with status ${proxyResponse.status}`);
-            }
-
-            const proxyData = await proxyResponse.json();
-            return proxyData.answer || proxyData.output_text || proxyData.text || "";
-        }
-
-        if (!hasApiKey(config)) {
-            return null;
-        }
-
-        const response = await fetch("https://api.openai.com/v1/responses", {
+        const proxyResponse = await fetch(config.apiProxyUrl, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${config.apiKey}`
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: config.model || "gpt-5.5",
-                instructions: [
-                    "You are Quadratic, a clear and encouraging math coach for Aarush Dechu.",
-                    "Aarush is 12, finishing 6th grade and heading into 7th.",
-                    "He is strong in algebra and is training for AMC-8 and MATHCOUNTS, with AIME as a stretch goal.",
-                    "Prefer step-by-step reasoning, hints, and contest-style strategy over just final answers.",
-                    "Keep explanations age-appropriate but not watered down."
-                ].join(" "),
-                input: [
-                    `Question: ${question}`,
-                    localHint ? `Local solver hint: ${localHint}` : ""
-                ].join("\n")
+                question,
+                localHint,
+                history,
+                systemPrompt: getSystemPrompt(),
+                student: profile
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`OpenAI request failed with status ${response.status}`);
+        if (!proxyResponse.ok) {
+            let details = "";
+
+            try {
+                const errorData = await proxyResponse.json();
+                details = errorData.error ? `: ${errorData.error}` : "";
+            } catch {
+                details = "";
+            }
+
+            throw new Error(`Python backend failed with status ${proxyResponse.status}${details}`);
         }
 
-        return getResponseText(await response.json());
+        const proxyData = await proxyResponse.json();
+        return proxyData.answer || proxyData.output_text || proxyData.text || "";
+    }
+
+    async function askConfiguredAI(question, localHint, history) {
+        const config = getConfig();
+
+        if (shouldUseAI(config)) {
+            const answer = await askPythonBackend(question, localHint, history);
+            return {
+                answer,
+                source: answer ? "Python Gemini backend" : ""
+            };
+        }
+
+        return {
+            answer: null,
+            source: ""
+        };
     }
 
     function answerLocally(question) {
@@ -600,6 +696,7 @@
         }
 
         const responders = [
+            answerRootExpression,
             answerQuadratic,
             answerLinear,
             answerCombinatorics,
@@ -626,16 +723,40 @@
         ].join("\n");
     }
 
-    async function answer(question) {
+    function answerFallback(question, history) {
+        const priorMethod = Array.isArray(history)
+            ? history
+                .filter((message) => message.role === "user" && /method|use|solve it by|do it with/i.test(message.content))
+                .slice(-1)[0]
+            : null;
+
         const localAnswer = answerLocally(question);
 
-        try {
-            const aiAnswer = await askOpenAI(question, localAnswer);
+        if (!priorMethod) {
+            return localAnswer;
+        }
 
-            if (aiAnswer) {
-                return aiAnswer;
+        return [
+            `I remember you asked about a method earlier: "${priorMethod.content}"`,
+            "",
+            "My local brain is limited, so I may not fully follow that method without the OpenAI brain turned on. Here is the best local answer I can give:",
+            "",
+            localAnswer
+        ].join("\n");
+    }
+
+    async function answer(question, history = []) {
+        const localAnswer = answerFallback(question, history);
+
+        try {
+            const aiResult = await askConfiguredAI(question, localAnswer, history);
+
+            if (aiResult.answer) {
+                lastAnswerSource = aiResult.source;
+                return aiResult.answer;
             }
         } catch (error) {
+            lastAnswerSource = "API error, local fallback";
             return [
                 "Quadratic could not reach the OpenAI API, so I used the local brain instead.",
                 `Reason: ${error.message}`,
@@ -644,11 +765,15 @@
             ].join("\n");
         }
 
+        lastAnswerSource = "Local fallback";
         return localAnswer;
     }
 
     window.AarushMathBrain = {
         answer,
-        answerLocally
+        answerLocally,
+        getLastAnswerSource() {
+            return lastAnswerSource;
+        }
     };
 }());

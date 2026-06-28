@@ -1,5 +1,5 @@
 # Local secrets
-js/quadratic-local-config.js
+.env
 
 # Operating system files
 .DS_Store

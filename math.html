@@ -44,8 +44,8 @@
     <div class="wrap quadratic-grid">
       <aside class="coach-panel">
         <span class="eyebrow">Coach mode</span>
-        <h2>Built for contest practice</h2>
-        <p>Quadratic keeps answers clear and step-by-step, with a local brain plus optional OpenAI power.</p>
+        <h2>Built for real tutoring</h2>
+        <p>Quadratic remembers this chat, follows the method you ask for, and explains one step at a time.</p>
 
         <div class="coach-badges" aria-label="Quadratic focus areas">
           <span>RSM honors-plus</span>
@@ -55,6 +55,8 @@
           <span>Algebra</span>
           <span>Circles</span>
         </div>
+
+        <button class="memory-button" type="button" id="clear-memory">Clear chat memory</button>
       </aside>
 
       <section class="quadratic-chat-card" aria-label="Quadratic chat">
@@ -69,15 +71,15 @@
         <div id="math-chat" class="math-chat" aria-live="polite">
           <article class="math-message bot">
             <strong>Quadratic</strong>
-            <p>Send me a problem. I can coach through it step by step.</p>
+            <p>Send me a problem and tell me how you want to solve it. I will go slowly, explain each step, and remember what we have already talked about in this chat.</p>
           </article>
         </div>
 
         <div class="prompt-chips" aria-label="Sample questions">
-          <button class="chip" type="button" data-question="Solve 3x + 7 = 25">3x + 7 = 25</button>
-          <button class="chip" type="button" data-question="How many ways to arrange 5 books?">5 books</button>
-          <button class="chip" type="button" data-question="What is the area of a circle with radius 6?">Circle r = 6</button>
-          <button class="chip" type="button" data-question="Find the next number in 3, 6, 12, 24">Sequence</button>
+          <button class="chip" type="button" data-question="Solve 3x + 7 = 25 slowly and explain why each step works.">Linear equation</button>
+          <button class="chip" type="button" data-question="Use cases to count how many 3-digit numbers have digits that add to 8.">Counting by cases</button>
+          <button class="chip" type="button" data-question="Teach me how to approach circle angle problems, then give me one example.">Circle strategy</button>
+          <button class="chip" type="button" data-question="Remember this method: first try a smaller example, then generalize. Now solve a sequence problem using that method.">Method memory</button>
         </div>
 
         <form id="math-form" class="math-form">
@@ -86,6 +88,7 @@
             <textarea id="math-question" rows="3" placeholder="Type a math question here..."></textarea>
             <button class="btn btn--coral" type="submit">Ask</button>
           </div>
+          <p class="privacy-note">Notice: do not submit confidential information, passwords, addresses, phone numbers, or other private personal data.</p>
         </form>
       </section>
     </div>
@@ -99,7 +102,6 @@
   </footer>
 
   <script src="js/quadratic-config.js"></script>
-  <script src="js/quadratic-local-config.js"></script>
   <script src="js/math-brain.js"></script>
   <script src="js/main.js"></script>
 </body>
