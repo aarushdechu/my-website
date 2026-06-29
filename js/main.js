@@ -336,6 +336,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const resetForm = document.getElementById("reset-form");
   if (resetForm) {
+    const requestResetCodeButton = document.getElementById("request-reset-code");
+    if (requestResetCodeButton) {
+      requestResetCodeButton.addEventListener("click", async () => {
+        const username = resetForm.querySelector('[name="username"]').value.trim();
+
+        if (!username) {
+          setAuthMessage("Enter your email or username first.", "error");
+          return;
+        }
+
+        requestResetCodeButton.disabled = true;
+        requestResetCodeButton.textContent = "Generating";
+        setAuthMessage("Generating reset code...", "");
+
+        try {
+          const data = await apiJson("/api/request-password-reset", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username }),
+          });
+          const resetCodeInput = resetForm.querySelector('[name="reset-code"]');
+          if (resetCodeInput) resetCodeInput.value = data.resetCode;
+          setAuthMessage(data.message || "Reset code generated.", "success");
+        } catch (error) {
+          setAuthMessage(error.message, "error");
+        } finally {
+          requestResetCodeButton.disabled = false;
+          requestResetCodeButton.textContent = "Generate 10-digit code";
+        }
+      });
+    }
+
     resetForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       submitCredentials(resetForm, "/api/reset-password", "Password reset. Go log in.");

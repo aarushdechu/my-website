@@ -91,15 +91,17 @@
           <input id="reset-username" name="username" type="text" autocomplete="username" required />
         </div>
 
+        <button class="btn btn--ghost auth-submit" id="request-reset-code" type="button">Generate 10-digit code</button>
+
         <div class="auth-field">
           <label for="reset-code">Reset code</label>
-          <input id="reset-code" name="reset-code" type="password" autocomplete="one-time-code" required />
+          <input id="reset-code" name="reset-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{10}" required />
         </div>
 
         <div class="auth-field">
           <label for="reset-password">New password</label>
           <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="9" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{9,}" required />
-          <p class="auth-hint">Ask the site owner for the reset code, then choose a strong new password.</p>
+          <p class="auth-hint">Generate a temporary 10-digit code, then choose a strong new password.</p>
         </div>
 
         <div class="auth-field">

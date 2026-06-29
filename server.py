@@ -26,10 +26,12 @@ MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "900"))
 SESSION_COOKIE_NAME = "aarush_session"
 SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", str(7 * 24 * 60 * 60)))
 PASSWORD_ITERATIONS = 210_000
+RESET_CODE_SECONDS = int(os.environ.get("RESET_CODE_SECONDS", "600"))
 USERS_DB_PATH = Path(os.environ.get("USERS_DB_PATH", "users.db"))
 if not USERS_DB_PATH.is_absolute():
     USERS_DB_PATH = ROOT / USERS_DB_PATH
 request_times = deque()
+password_reset_codes = {}
 last_request_time = 0.0
 
 
@@ -272,6 +274,53 @@ def update_user_password(username, password):
         return cursor.rowcount > 0
 
 
+def make_reset_code():
+    return f"{secrets.randbelow(10_000_000_000):010d}"
+
+
+def hash_reset_code(code):
+    secret = get_session_secret()
+    if not secret:
+        return ""
+
+    return hmac.new(secret.encode("utf-8"), str(code).encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def cleanup_reset_codes():
+    now = time.time()
+    expired_users = [
+        username for username, record in password_reset_codes.items()
+        if record["expires"] < now
+    ]
+    for username in expired_users:
+        password_reset_codes.pop(username, None)
+
+
+def create_password_reset_code(username):
+    normalized = normalize_username(username)
+    code = make_reset_code()
+    password_reset_codes[normalized] = {
+        "hash": hash_reset_code(code),
+        "expires": time.time() + RESET_CODE_SECONDS,
+    }
+    return code
+
+
+def consume_password_reset_code(username, code):
+    cleanup_reset_codes()
+    normalized = normalize_username(username)
+    record = password_reset_codes.get(normalized)
+    if not record:
+        return False
+
+    supplied_hash = hash_reset_code(code)
+    if not supplied_hash or not hmac.compare_digest(record["hash"], supplied_hash):
+        return False
+
+    password_reset_codes.pop(normalized, None)
+    return True
+
+
 def authenticate_user(username, password):
     normalized = normalize_username(username)
     user = get_user(normalized)
@@ -317,6 +366,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         if self.request_path == "/api/login":
             self.handle_login()
+            return
+
+        if self.request_path == "/api/request-password-reset":
+            self.handle_request_password_reset()
             return
 
         if self.request_path == "/api/reset-password":
@@ -432,6 +485,31 @@ class SiteHandler(SimpleHTTPRequestHandler):
             headers={"Set-Cookie": build_session_cookie(token)},
         )
 
+    def handle_request_password_reset(self):
+        try:
+            payload = self.read_json()
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        if not get_session_secret():
+            self.send_json({"error": "Missing SESSION_SECRET environment variable."}, 500)
+            return
+
+        username = normalize_username(payload.get("username", ""))
+        if not get_user(username):
+            self.send_json({"error": "No account found for that email or username."}, 404)
+            return
+
+        code = create_password_reset_code(username)
+        self.send_json(
+            {
+                "ok": True,
+                "resetCode": code,
+                "message": f"Your reset code is {code}. It expires in {RESET_CODE_SECONDS // 60} minutes.",
+            }
+        )
+
     def handle_reset_password(self):
         try:
             payload = self.read_json()
@@ -439,17 +517,16 @@ class SiteHandler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Invalid JSON"}, 400)
             return
 
-        reset_code = os.environ.get("PASSWORD_RESET_CODE", "")
-        if not reset_code:
-            self.send_json({"error": "Password reset is not configured yet."}, 500)
+        if not get_session_secret():
+            self.send_json({"error": "Missing SESSION_SECRET environment variable."}, 500)
             return
 
         username = normalize_username(payload.get("username", ""))
         supplied_code = str(payload.get("resetCode", ""))
         new_password = str(payload.get("password", ""))
 
-        if not hmac.compare_digest(supplied_code, reset_code):
-            self.send_json({"error": "Incorrect reset code."}, 401)
+        if not consume_password_reset_code(username, supplied_code):
+            self.send_json({"error": "Incorrect or expired reset code."}, 401)
             return
 
         password_error = validate_password_policy(new_password)
