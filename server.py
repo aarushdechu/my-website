@@ -58,7 +58,12 @@ def build_tutor_input(payload):
             "Local solver hint, if useful:",
             local_hint or "No local hint.",
             "",
-            "Respond as Quadratic. If Aarush gave a preferred method, use it. Teach slowly with explanations, not just an answer.",
+            "If the local solver hint gives a theorem-based solution with named lengths, verify it and use it as the backbone of your answer.",
+            "Do not switch to unrelated formulas like circle area or circumference unless the user explicitly asks for those.",
+            "Respond as Quadratic. If Aarush gave a preferred method, use it.",
+            "Teach slowly with explanations, not just an answer.",
+            "For geometry, carefully identify the theorem before calculating.",
+            "Give a complete answer, including each requested quantity.",
         ]
     )
 
@@ -122,21 +127,37 @@ class SiteHandler(SimpleHTTPRequestHandler):
         model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
         system_prompt = payload.get("systemPrompt") or "You are Quadratic, a patient math tutor."
         request_body = {
-            "model": model,
-            "system_instruction": system_prompt,
-            "input": build_tutor_input(payload),
-            "generation_config": {
-                "max_output_tokens": MAX_OUTPUT_TOKENS,
+            "systemInstruction": {
+                "parts": [
+                    {
+                        "text": system_prompt
+                    }
+                ]
+            },
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": build_tutor_input(payload)
+                        }
+                    ],
+                }
+            ],
+            "generationConfig": {
+                "maxOutputTokens": MAX_OUTPUT_TOKENS,
                 "temperature": 0.35,
+                "thinkingConfig": {
+                    "thinkingBudget": 256
+                },
             },
         }
 
         request = urllib.request.Request(
-            "https://generativelanguage.googleapis.com/v1beta/interactions",
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
             data=json.dumps(request_body).encode("utf-8"),
             headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": api_key,
+                "Content-Type": "application/json"
             },
             method="POST",
         )

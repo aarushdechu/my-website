@@ -515,6 +515,71 @@
         return "I do not see a single constant difference or ratio yet. Try checking second differences, alternating patterns, or whether the terms come from squares/cubes.";
     }
 
+    function findNamedLength(text, name) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const patterns = [
+            new RegExp(`${escaped}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "i"),
+            new RegExp(`${escaped}\\s+is\\s+(-?\\d+(?:\\.\\d+)?)`, "i")
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match) {
+                return Number(match[1]);
+            }
+        }
+
+        return null;
+    }
+
+    function answerTangentSecantChordSetup(question) {
+        const text = question.toLowerCase();
+
+        if (!/(tangent|secant|chord)/.test(text)) {
+            return null;
+        }
+
+        const ad = findNamedLength(question, "AD");
+        const dh = findNamedLength(question, "DH");
+        const hc = findNamedLength(question, "HC");
+        const fh = findNamedLength(question, "FH");
+
+        if (![ad, dh, hc, fh].every((value) => Number.isFinite(value))) {
+            return null;
+        }
+
+        const hg = (dh * hc) / fh;
+        const dc = dh + hc;
+        const ac = ad + dc;
+        const tangentSquared = ad * ac;
+        const tangent = Math.sqrt(tangentSquared);
+
+        return [
+            "Use two circle theorems here: intersecting chords first, then tangent-secant.",
+            "",
+            "Given: AD = " + formatNumber(ad) + ", DH = " + formatNumber(dh) + ", HC = " + formatNumber(hc) + ", FH = " + formatNumber(fh) + ".",
+            "Since A-D-H-C are on the secant line, the inside chord DC is DH + HC.",
+            "",
+            "1. Find HG using the Intersecting Chords Theorem.",
+            "DH * HC = FH * HG",
+            `${formatNumber(dh)} * ${formatNumber(hc)} = ${formatNumber(fh)} * HG`,
+            `${formatNumber(dh * hc)} = ${formatNumber(fh)} * HG`,
+            `HG = ${formatNumber(hg)}`,
+            "",
+            "2. Find the internal secant/chord length DC.",
+            `DC = DH + HC = ${formatNumber(dh)} + ${formatNumber(hc)} = ${formatNumber(dc)}`,
+            "",
+            "3. Find the tangent length AB using the Tangent-Secant Theorem.",
+            "AB^2 = external secant part * whole secant",
+            `AB^2 = AD * AC`,
+            `AC = AD + DC = ${formatNumber(ad)} + ${formatNumber(dc)} = ${formatNumber(ac)}`,
+            `AB^2 = ${formatNumber(ad)} * ${formatNumber(ac)} = ${formatNumber(tangentSquared)}`,
+            `AB = sqrt(${formatNumber(tangentSquared)}) = ${formatNumber(tangent)}`,
+            "",
+            `Final answers: HG = ${formatNumber(hg)}, DC = ${formatNumber(dc)}, AB = sqrt(${formatNumber(tangentSquared)}) = ${formatNumber(tangent)}.`
+        ].join("\n");
+    }
+
     function answerCircle(question) {
         const text = question.toLowerCase();
         const nums = extractNumbers(question);
@@ -696,6 +761,7 @@
         }
 
         const responders = [
+            answerTangentSecantChordSetup,
             answerRootExpression,
             answerQuadratic,
             answerLinear,
