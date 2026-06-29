@@ -33,6 +33,11 @@
       <h1 id="login-title">Log in</h1>
       <p class="auth-intro" id="auth-intro">Log in to unlock Quadratic.</p>
 
+      <div class="google-login-wrap">
+        <div id="google-signin"></div>
+        <p class="auth-hint" id="google-signin-hint">Google sign-in appears when GOOGLE_CLIENT_ID is set.</p>
+      </div>
+
       <div class="auth-tabs" role="tablist" aria-label="Choose account action">
         <button class="auth-tab is-active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Log in</button>
         <button class="auth-tab" type="button" data-auth-tab="signup" role="tab" aria-selected="false">Sign up</button>
@@ -41,8 +46,8 @@
 
       <form class="auth-form" id="login-form" data-auth-panel="login" data-submit-text="Log in">
         <div class="auth-field">
-          <label for="login-username">Email or username</label>
-          <input id="login-username" name="username" type="text" autocomplete="username" required />
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" placeholder="someone@example.com" required />
         </div>
 
         <div class="auth-field">
@@ -56,18 +61,21 @@
 
       <form class="auth-form" id="signup-form" data-auth-panel="signup" data-submit-text="Sign up" hidden>
         <div class="auth-field">
-          <label for="signup-full-name">Delivery name</label>
-          <input id="signup-full-name" name="full-name" type="text" autocomplete="name" required />
+          <label for="signup-display-name">Username</label>
+          <input id="signup-display-name" name="display-name" type="text" autocomplete="nickname" required />
         </div>
 
         <div class="auth-field">
-          <label for="signup-username">Email or username</label>
-          <input id="signup-username" name="username" type="text" autocomplete="username" required />
+          <label for="signup-email">Email</label>
+          <input id="signup-email" name="email" type="email" autocomplete="email" placeholder="someone@example.com" required />
         </div>
 
+        <button class="btn btn--ghost auth-submit" id="request-email-code" type="button">Send 6-digit code</button>
+
         <div class="auth-field">
-          <label for="signup-address">Delivery address</label>
-          <textarea id="signup-address" name="delivery-address" autocomplete="street-address" rows="3" required></textarea>
+          <label for="signup-email-code">Email verification code</label>
+          <input id="signup-email-code" name="email-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required />
+          <p class="auth-hint">We will email this code to make sure the address can receive mail.</p>
         </div>
 
         <div class="auth-field">
@@ -81,27 +89,26 @@
           <input id="signup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="9" required />
         </div>
 
-        <p class="auth-hint">Use a delivery address only with grown-up permission.</p>
         <button class="btn btn--coral auth-submit" type="submit">Sign up</button>
       </form>
 
       <form class="auth-form" id="reset-form" data-auth-panel="reset" data-submit-text="Reset password" hidden>
         <div class="auth-field">
-          <label for="reset-username">Email or username</label>
-          <input id="reset-username" name="username" type="text" autocomplete="username" required />
+          <label for="reset-email">Email</label>
+          <input id="reset-email" name="email" type="email" autocomplete="email" placeholder="someone@example.com" required />
         </div>
 
-        <button class="btn btn--ghost auth-submit" id="request-reset-code" type="button">Generate 10-digit code</button>
+        <button class="btn btn--ghost auth-submit" id="request-reset-code" type="button">Send 6-digit code</button>
 
         <div class="auth-field">
           <label for="reset-code">Reset code</label>
-          <input id="reset-code" name="reset-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{10}" required />
+          <input id="reset-code" name="reset-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required />
         </div>
 
         <div class="auth-field">
           <label for="reset-password">New password</label>
           <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="9" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{9,}" required />
-          <p class="auth-hint">Generate a temporary 10-digit code, then choose a strong new password.</p>
+          <p class="auth-hint">We will email a temporary 6-digit code, then you can choose a strong new password.</p>
         </div>
 
         <div class="auth-field">

@@ -58,6 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let authState = {
     authenticated: false,
     username: null,
+    email: null,
+    displayName: null,
+    profileInitial: null,
   };
 
   function setAuthMessage(text, type = "") {
@@ -66,6 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     message.textContent = text;
     message.className = `auth-message ${type}`.trim();
+  }
+
+  function isValidEmail(email) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   }
 
   async function apiJson(url, options = {}) {
@@ -89,12 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateAuthLinks() {
     authLinks.forEach((link) => {
       if (authState.authenticated) {
-        link.textContent = "Logout";
-        link.href = "#logout";
-        link.title = `Logged in as ${authState.username}`;
+        link.textContent = authState.profileInitial || "?";
+        link.href = "#profile";
+        link.title = `Profile for ${authState.displayName || authState.email || authState.username}`;
+        link.classList.add("profile-pill");
         return;
       }
 
+      link.classList.remove("profile-pill");
       link.textContent = "Login / Sign up";
       link.href = "login.html";
       link.title = "Log in or sign up";
@@ -105,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       authState = await apiJson("/api/session");
     } catch {
-      authState = { authenticated: false, username: null };
+      authState = { authenticated: false, username: null, email: null, displayName: null, profileInitial: null };
     } finally {
       updateAuthLinks();
     }
@@ -156,6 +165,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function logout() {
+    try {
+      await apiJson("/api/logout", { method: "POST" });
+    } finally {
+      authState = { authenticated: false, username: null, email: null, displayName: null, profileInitial: null };
+      updateAuthLinks();
+      window.location.href = "login.html";
+    }
+  }
+
+  function getProfileMenu() {
+    let menu = document.getElementById("profile-menu");
+    if (menu) return menu;
+
+    menu = document.createElement("div");
+    menu.className = "profile-menu";
+    menu.id = "profile-menu";
+    menu.hidden = true;
+    menu.innerHTML = `
+      <div class="profile-menu__panel">
+        <div class="profile-menu__top">
+          <span class="profile-menu__avatar"></span>
+          <div>
+            <strong class="profile-menu__name"></strong>
+            <span class="profile-menu__email"></span>
+          </div>
+        </div>
+        <div class="profile-menu__item">
+          <b>Password</b>
+          <span>Hidden and encrypted. Use Forgot password to reset it.</span>
+        </div>
+        <div class="profile-menu__item">
+          <b>Past billing info</b>
+          <span>Coming later.</span>
+        </div>
+        <button class="profile-menu__button" type="button" data-profile-reset>Reset password</button>
+        <button class="profile-menu__button profile-menu__button--danger" type="button" data-profile-logout>Log out</button>
+      </div>
+    `;
+    document.body.append(menu);
+    menu.querySelector("[data-profile-logout]").addEventListener("click", logout);
+    menu.querySelector("[data-profile-reset]").addEventListener("click", () => {
+      window.location.href = "login.html?mode=reset";
+    });
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-auth-link]") || event.target.closest("#profile-menu")) return;
+      menu.hidden = true;
+    });
+    return menu;
+  }
+
+  function showProfileMenu() {
+    const menu = getProfileMenu();
+    menu.querySelector(".profile-menu__avatar").textContent = authState.profileInitial || "?";
+    menu.querySelector(".profile-menu__name").textContent = authState.displayName || "Profile";
+    menu.querySelector(".profile-menu__email").textContent = authState.email || authState.username || "";
+    menu.hidden = !menu.hidden;
+  }
+
   function validatePassword(password) {
     const missing = [];
 
@@ -173,13 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!authState.authenticated) return;
 
       event.preventDefault();
-      try {
-        await apiJson("/api/logout", { method: "POST" });
-      } finally {
-        authState = { authenticated: false, username: null };
-        updateAuthLinks();
-        window.location.href = "login.html";
-      }
+      showProfileMenu();
     });
   });
 
@@ -202,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       signup: {
         title: "Sign up",
-        intro: "Create an account to unlock Quadratic and save delivery details for shop orders.",
+        intro: "Create an account to unlock Quadratic.",
       },
       reset: {
         title: "Reset password",
@@ -241,26 +303,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function submitCredentials(form, endpoint, successText) {
-    const username = form.querySelector('[name="username"]').value.trim();
+    const email = form.querySelector('[name="email"]')?.value.trim().toLowerCase();
+    const username = email || form.querySelector('[name="username"]')?.value.trim().toLowerCase() || "";
     const password = form.querySelector('[name="password"]').value;
     const confirmPassword = form.querySelector('[name="confirm-password"]')?.value;
-    const fullName = form.querySelector('[name="full-name"]')?.value.trim();
-    const deliveryAddress = form.querySelector('[name="delivery-address"]')?.value.trim();
+    const displayName = form.querySelector('[name="display-name"]')?.value.trim();
     const resetCode = form.querySelector('[name="reset-code"]')?.value;
+    const emailCode = form.querySelector('[name="email-code"]')?.value;
     const submitButton = form.querySelector('button[type="submit"]');
 
     if (!username || !password) {
-      setAuthMessage("Enter your username and password.", "error");
+      setAuthMessage("Enter your email and password.", "error");
       return;
     }
 
-    if (fullName !== undefined && fullName.length < 2) {
-      setAuthMessage("Enter a delivery name.", "error");
+    if (!isValidEmail(username)) {
+      setAuthMessage("Enter an email like someone@example.com.", "error");
       return;
     }
 
-    if (deliveryAddress !== undefined && deliveryAddress.length < 8) {
-      setAuthMessage("Enter a delivery address for shop orders.", "error");
+    if (displayName !== undefined && displayName.length < 2) {
+      setAuthMessage("Enter a username with at least 2 characters.", "error");
       return;
     }
 
@@ -269,14 +332,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const passwordError = validatePassword(password);
-    if (endpoint !== "/api/login" && passwordError) {
-      setAuthMessage(passwordError, "error");
+    if (emailCode !== undefined && !/^[0-9]{6}$/.test(emailCode)) {
+      setAuthMessage("Enter the 6-digit email verification code.", "error");
       return;
     }
 
     if (confirmPassword !== undefined && password !== confirmPassword) {
       setAuthMessage("Those passwords do not match.", "error");
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (endpoint !== "/api/login" && passwordError) {
+      setAuthMessage(passwordError, "error");
       return;
     }
 
@@ -287,10 +355,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setAuthMessage("Checking...", "");
 
     try {
-      const payload = { username, password };
-      if (fullName !== undefined) payload.fullName = fullName;
-      if (deliveryAddress !== undefined) payload.deliveryAddress = deliveryAddress;
+      const payload = { username, email: username, password };
+      if (displayName !== undefined) payload.displayName = displayName;
       if (resetCode !== undefined) payload.resetCode = resetCode;
+      if (emailCode !== undefined) payload.emailCode = emailCode;
 
       const data = await apiJson(endpoint, {
         method: "POST",
@@ -328,6 +396,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const signupForm = document.getElementById("signup-form");
   if (signupForm) {
+    const requestEmailCodeButton = document.getElementById("request-email-code");
+    if (requestEmailCodeButton) {
+      requestEmailCodeButton.addEventListener("click", async () => {
+        const email = signupForm.querySelector('[name="email"]').value.trim().toLowerCase();
+
+        if (!email) {
+          setAuthMessage("Enter your email first.", "error");
+          return;
+        }
+
+        if (!isValidEmail(email)) {
+          setAuthMessage("Enter an email like someone@example.com.", "error");
+          return;
+        }
+
+        requestEmailCodeButton.disabled = true;
+        requestEmailCodeButton.textContent = "Sending";
+        setAuthMessage("Sending verification code...", "");
+
+        try {
+          const data = await apiJson("/api/request-email-verification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+          setAuthMessage(data.message || "Verification code sent. Check your email.", "success");
+        } catch (error) {
+          setAuthMessage(error.message, "error");
+        } finally {
+          requestEmailCodeButton.disabled = false;
+          requestEmailCodeButton.textContent = "Send 6-digit code";
+        }
+      });
+    }
+
     signupForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       submitCredentials(signupForm, "/api/signup", "Account created. Redirecting...");
@@ -339,10 +444,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const requestResetCodeButton = document.getElementById("request-reset-code");
     if (requestResetCodeButton) {
       requestResetCodeButton.addEventListener("click", async () => {
-        const username = resetForm.querySelector('[name="username"]').value.trim();
+        const username = resetForm.querySelector('[name="email"]').value.trim().toLowerCase();
 
         if (!username) {
-          setAuthMessage("Enter your email or username first.", "error");
+          setAuthMessage("Enter your email first.", "error");
+          return;
+        }
+
+        if (!isValidEmail(username)) {
+          setAuthMessage("Enter an email like someone@example.com.", "error");
           return;
         }
 
@@ -358,14 +468,12 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({ username }),
           });
-          const resetCodeInput = resetForm.querySelector('[name="reset-code"]');
-          if (resetCodeInput) resetCodeInput.value = data.resetCode;
-          setAuthMessage(data.message || "Reset code generated.", "success");
+          setAuthMessage(data.message || "Password reset code sent. Check your email.", "success");
         } catch (error) {
           setAuthMessage(error.message, "error");
         } finally {
           requestResetCodeButton.disabled = false;
-          requestResetCodeButton.textContent = "Generate 10-digit code";
+          requestResetCodeButton.textContent = "Send 6-digit code";
         }
       });
     }
@@ -375,6 +483,86 @@ document.addEventListener("DOMContentLoaded", () => {
       submitCredentials(resetForm, "/api/reset-password", "Password reset. Go log in.");
     });
   }
+
+  function loadGoogleScript() {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts?.id) {
+        resolve();
+        return;
+      }
+
+      const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.addEventListener("load", resolve, { once: true });
+      script.addEventListener("error", reject, { once: true });
+      document.head.append(script);
+    });
+  }
+
+  async function handleGoogleCredential(response) {
+    if (!response?.credential) {
+      setAuthMessage("Google did not return a sign-in credential.", "error");
+      return;
+    }
+
+    try {
+      const data = await apiJson("/api/google-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      authState = data;
+      updateAuthLinks();
+      setAuthMessage("Signed in with Google. Redirecting...", "success");
+      window.setTimeout(() => {
+        window.location.href = "index.html";
+      }, 550);
+    } catch (error) {
+      setAuthMessage(error.message, "error");
+    }
+  }
+
+  async function setupGoogleSignIn() {
+    const googleButton = document.getElementById("google-signin");
+    const googleHint = document.getElementById("google-signin-hint");
+    if (!googleButton) return;
+
+    try {
+      const config = await apiJson("/api/auth-config");
+      if (!config.googleClientId) {
+        if (googleHint) googleHint.textContent = "Google sign-in is not configured yet.";
+        return;
+      }
+
+      await loadGoogleScript();
+      window.google.accounts.id.initialize({
+        client_id: config.googleClientId,
+        callback: handleGoogleCredential,
+      });
+      window.google.accounts.id.renderButton(googleButton, {
+        theme: "outline",
+        size: "large",
+        shape: "pill",
+        width: Math.min(420, googleButton.parentElement?.clientWidth || 360),
+      });
+      if (googleHint) googleHint.textContent = "";
+    } catch {
+      if (googleHint) googleHint.textContent = "Google sign-in could not load.";
+    }
+  }
+
+  setupGoogleSignIn();
 
   const authReady = refreshSession();
   authReady.then((session) => {

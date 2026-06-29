@@ -122,6 +122,19 @@ img { max-width: 100%; display: block; }
   transform: translateY(-1px);
 }
 
+.nav-links a.profile-pill {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: linear-gradient(135deg, var(--violet), var(--teal));
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  box-shadow: 0 10px 20px -14px rgba(27, 34, 64, 0.8);
+}
+
 .nav-toggle {
   display: none;
   background: none; border: 2px solid var(--ink);
@@ -274,6 +287,16 @@ img { max-width: 100%; display: block; }
 .auth-intro {
   margin: 0 0 24px;
   color: var(--ink-soft);
+}
+
+.google-login-wrap {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+#google-signin {
+  min-height: 44px;
 }
 
 .auth-tabs {
@@ -457,6 +480,92 @@ img { max-width: 100%; display: block; }
 
 .auth-modal.is-required .auth-modal__close {
   display: none;
+}
+
+.profile-menu[hidden] {
+  display: none;
+}
+
+.profile-menu {
+  position: fixed;
+  top: 76px;
+  right: max(22px, calc((100vw - var(--maxw)) / 2 + 22px));
+  z-index: 90;
+  width: min(92vw, 340px);
+  animation: modalCardIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.profile-menu__panel {
+  border: 1px solid var(--crease);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.96);
+  box-shadow: 0 24px 60px -34px rgba(27,34,64,0.9);
+  padding: 16px;
+}
+
+.profile-menu__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--crease);
+}
+
+.profile-menu__avatar {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--teal));
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.profile-menu__name,
+.profile-menu__email {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu__name {
+  font-family: var(--font-display);
+}
+
+.profile-menu__email,
+.profile-menu__item span {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.profile-menu__item {
+  display: grid;
+  gap: 3px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--crease);
+}
+
+.profile-menu__button {
+  width: 100%;
+  margin-top: 10px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.profile-menu__button--danger {
+  background: var(--coral);
+  border-color: var(--coral);
 }
 
 .is-quadratic-locked .quadratic-chat-card {

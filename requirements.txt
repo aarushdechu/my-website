@@ -1,2 +1,1 @@
-# This project currently uses only Python's standard library.
-# Keep this file so Render and future Python package installs have a clear place to go.
+google-auth>=2.29.0
