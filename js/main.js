@@ -51,6 +51,241 @@ document.addEventListener("DOMContentLoaded", () => {
     el.textContent = new Date().getFullYear();
   });
 
+  const authLinks = document.querySelectorAll("[data-auth-link]");
+  const isLoginPage = Boolean(document.getElementById("login-form") || document.getElementById("signup-form"));
+  const isQuadraticPage = window.location.pathname.endsWith("/math.html") || window.location.pathname.endsWith("/math");
+  const authPromptKey = "aarush-auth-prompt-seen";
+  let authState = {
+    authenticated: false,
+    username: null,
+  };
+
+  function setAuthMessage(text, type = "") {
+    const message = document.getElementById("login-message");
+    if (!message) return;
+
+    message.textContent = text;
+    message.className = `auth-message ${type}`.trim();
+  }
+
+  async function apiJson(url, options = {}) {
+    const response = await fetch(url, options);
+    const text = await response.text();
+    let data = {};
+
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error("The login API is not active yet. Run the site with python3 server.py locally, or redeploy the latest Python backend on Render.");
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || `Request failed with status ${response.status}.`);
+    }
+
+    return data;
+  }
+
+  function updateAuthLinks() {
+    authLinks.forEach((link) => {
+      if (authState.authenticated) {
+        link.textContent = "Logout";
+        link.href = "#logout";
+        link.title = `Logged in as ${authState.username}`;
+        return;
+      }
+
+      link.textContent = "Login / Sign up";
+      link.href = "login.html";
+      link.title = "Log in or sign up";
+    });
+  }
+
+  async function refreshSession() {
+    try {
+      authState = await apiJson("/api/session");
+    } catch {
+      authState = { authenticated: false, username: null };
+    } finally {
+      updateAuthLinks();
+    }
+
+    return authState;
+  }
+
+  function getAuthModal() {
+    let modal = document.getElementById("auth-modal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.className = "auth-modal";
+    modal.id = "auth-modal";
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="auth-modal__backdrop" data-auth-dismiss></div>
+      <section class="auth-modal__card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <span class="eyebrow">Member bonus</span>
+        <h2 id="auth-modal-title">Log in or sign up for more</h2>
+        <p>Make an account to unlock Quadratic and keep the website feeling more personal.</p>
+        <div class="auth-modal__actions">
+          <a class="btn btn--coral" href="login.html?mode=signup">Sign up</a>
+          <a class="btn btn--ghost" href="login.html">Log in</a>
+        </div>
+        <button class="auth-modal__close" type="button" data-auth-dismiss aria-label="Close">×</button>
+      </section>
+    `;
+    document.body.append(modal);
+    modal.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-auth-dismiss]")) return;
+      if (modal.classList.contains("is-required")) return;
+      modal.hidden = true;
+    });
+    return modal;
+  }
+
+  function showAuthPrompt(required = false) {
+    if (authState.authenticated || isLoginPage) return;
+    if (!required && sessionStorage.getItem(authPromptKey)) return;
+
+    const modal = getAuthModal();
+    modal.classList.toggle("is-required", required);
+    modal.hidden = false;
+
+    if (!required) {
+      sessionStorage.setItem(authPromptKey, "true");
+    }
+  }
+
+  authLinks.forEach((link) => {
+    link.addEventListener("click", async (event) => {
+      if (!authState.authenticated) return;
+
+      event.preventDefault();
+      try {
+        await apiJson("/api/logout", { method: "POST" });
+      } finally {
+        authState = { authenticated: false, username: null };
+        updateAuthLinks();
+        window.location.href = "login.html";
+      }
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const quadraticLink = event.target.closest('a[href="math.html"]');
+    if (!quadraticLink || authState.authenticated || isLoginPage) return;
+
+    event.preventDefault();
+    showAuthPrompt(true);
+  });
+
+  function selectAuthMode(mode) {
+    const selectedMode = mode === "signup" ? "signup" : "login";
+    const title = document.getElementById("login-title");
+    const intro = document.getElementById("auth-intro");
+
+    if (title) {
+      title.textContent = selectedMode === "signup" ? "Sign up" : "Log in";
+    }
+
+    if (intro) {
+      intro.textContent = selectedMode === "signup"
+        ? "Create an account to unlock Quadratic."
+        : "Log in to unlock Quadratic.";
+    }
+
+    document.querySelectorAll("[data-auth-tab]").forEach((tab) => {
+      const active = tab.dataset.authTab === selectedMode;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    document.querySelectorAll("[data-auth-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.authPanel !== selectedMode;
+    });
+  }
+
+  document.querySelectorAll("[data-auth-tab]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      selectAuthMode(tab.dataset.authTab);
+      setAuthMessage("");
+    });
+  });
+
+  if (isLoginPage) {
+    selectAuthMode(new URLSearchParams(window.location.search).get("mode"));
+  }
+
+  async function submitCredentials(form, endpoint, successText) {
+    const username = form.querySelector('[name="username"]').value.trim();
+    const password = form.querySelector('[name="password"]').value;
+    const confirmPassword = form.querySelector('[name="confirm-password"]')?.value;
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (!username || !password) {
+      setAuthMessage("Enter your username and password.", "error");
+      return;
+    }
+
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      setAuthMessage("Those passwords do not match.", "error");
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Checking";
+    }
+    setAuthMessage("Checking...", "");
+
+    try {
+      const data = await apiJson(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      authState = data;
+      updateAuthLinks();
+      setAuthMessage(successText, "success");
+      window.setTimeout(() => {
+        window.location.href = "index.html";
+      }, 550);
+    } catch (error) {
+      setAuthMessage(error.message, "error");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = form.dataset.submitText || "Submit";
+      }
+    }
+  }
+
+  const loginForm = document.getElementById("login-form");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      submitCredentials(loginForm, "/api/login", "You're in. Redirecting...");
+    });
+  }
+
+  const signupForm = document.getElementById("signup-form");
+  if (signupForm) {
+    signupForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      submitCredentials(signupForm, "/api/signup", "Account created. Redirecting...");
+    });
+  }
+
+  const authReady = refreshSession();
+  authReady.then((session) => {
+    if (!session.authenticated && !isQuadraticPage) {
+      showAuthPrompt(false);
+    }
+  });
+
   // Build the shop grid (only on shop.html)
   const shopGrid = document.getElementById("shop-grid");
   if (shopGrid) shopGrid.innerHTML = SHOP_ITEMS.map(shopCard).join("");
@@ -78,6 +313,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const config = window.QuadraticAIConfig || {};
   const maxTurns = config.maxConversationTurns || 12;
   let quadraticHistory = [];
+
+  function lockQuadraticForGuests() {
+    if (!mathForm) return;
+
+    document.body.classList.add("is-quadratic-locked");
+    if (askButton) askButton.disabled = true;
+    if (mathQuestion) {
+      mathQuestion.disabled = true;
+      mathQuestion.placeholder = "Log in or sign up to use Quadratic.";
+    }
+
+    document.querySelectorAll("[data-question]").forEach((chip) => {
+      chip.disabled = true;
+    });
+
+    setQuadraticStatus("Locked");
+    if (mathChat && !mathChat.querySelector("[data-auth-required-message]")) {
+      const message = addMathMessage("bot", "Log in or sign up to unlock Quadratic.");
+      if (message) message.dataset.authRequiredMessage = "true";
+    }
+  }
+
+  authReady.then((session) => {
+    if (mathForm && !session.authenticated) {
+      lockQuadraticForGuests();
+      showAuthPrompt(true);
+    }
+  });
 
   function hasUsableApiKey() {
     return Boolean(config.apiProxyUrl);
@@ -195,6 +458,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function askQuadratic(question) {
+    if (!authState.authenticated) {
+      lockQuadraticForGuests();
+      showAuthPrompt(true);
+      return;
+    }
+
     if (askButton) {
       askButton.disabled = true;
       askButton.textContent = "Thinking";

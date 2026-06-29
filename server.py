@@ -1,10 +1,16 @@
+import base64
+import hashlib
+import hmac
 import json
 import mimetypes
 import os
+import secrets
+import sqlite3
 import time
 import urllib.error
 import urllib.request
 from collections import deque
+from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -17,6 +23,12 @@ MAX_REQUESTS_PER_WINDOW = int(os.environ.get("GEMINI_RPM_LIMIT", "15"))
 COOLDOWN_SECONDS = float(os.environ.get("QUADRATIC_COOLDOWN_SECONDS", "1"))
 MAX_HISTORY_MESSAGES = int(os.environ.get("QUADRATIC_HISTORY_MESSAGES", "6"))
 MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "900"))
+SESSION_COOKIE_NAME = "aarush_session"
+SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", str(7 * 24 * 60 * 60)))
+PASSWORD_ITERATIONS = 210_000
+USERS_DB_PATH = Path(os.environ.get("USERS_DB_PATH", "users.db"))
+if not USERS_DB_PATH.is_absolute():
+    USERS_DB_PATH = ROOT / USERS_DB_PATH
 request_times = deque()
 last_request_time = 0.0
 
@@ -69,6 +81,162 @@ def build_tutor_input(payload):
     )
 
 
+def encode_base64url(data):
+    return base64.urlsafe_b64encode(data).decode("utf-8").rstrip("=")
+
+
+def decode_base64url(text):
+    padding = "=" * (-len(text) % 4)
+    return base64.urlsafe_b64decode((text + padding).encode("utf-8"))
+
+
+def get_session_secret():
+    return os.environ.get("SESSION_SECRET", "")
+
+
+def create_session_token(username):
+    secret = get_session_secret()
+    if not secret:
+        return ""
+
+    payload = {
+        "username": username,
+        "expires": int(time.time() + SESSION_SECONDS),
+        "nonce": secrets.token_urlsafe(12),
+    }
+    payload_text = encode_base64url(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    signature = hmac.new(secret.encode("utf-8"), payload_text.encode("utf-8"), hashlib.sha256).digest()
+    return f"{payload_text}.{encode_base64url(signature)}"
+
+
+def verify_session_token(token):
+    secret = get_session_secret()
+    if not secret or "." not in token:
+        return None
+
+    payload_text, signature_text = token.rsplit(".", 1)
+    expected_signature = hmac.new(secret.encode("utf-8"), payload_text.encode("utf-8"), hashlib.sha256).digest()
+
+    try:
+        supplied_signature = decode_base64url(signature_text)
+    except Exception:
+        return None
+
+    if not hmac.compare_digest(expected_signature, supplied_signature):
+        return None
+
+    try:
+        payload = json.loads(decode_base64url(payload_text).decode("utf-8"))
+    except Exception:
+        return None
+
+    if int(payload.get("expires", 0)) < time.time():
+        return None
+
+    return payload.get("username")
+
+
+def build_session_cookie(value, max_age=SESSION_SECONDS):
+    parts = [
+        f"{SESSION_COOKIE_NAME}={value}",
+        "Path=/",
+        f"Max-Age={max_age}",
+        "HttpOnly",
+        "SameSite=Lax",
+    ]
+
+    if os.environ.get("COOKIE_SECURE", "").lower() == "true":
+        parts.append("Secure")
+
+    return "; ".join(parts)
+
+
+def init_user_db():
+    USERS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(USERS_DB_PATH) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_salt TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+            """
+        )
+
+
+def normalize_username(username):
+    return str(username or "").strip().lower()
+
+
+def hash_password(password, salt=None):
+    raw_salt = salt or secrets.token_bytes(16)
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        str(password).encode("utf-8"),
+        raw_salt,
+        PASSWORD_ITERATIONS,
+    )
+    return encode_base64url(raw_salt), encode_base64url(password_hash)
+
+
+def verify_password(password, salt_text, hash_text):
+    try:
+        raw_salt = decode_base64url(salt_text)
+        expected_hash = decode_base64url(hash_text)
+    except Exception:
+        return False
+
+    _, supplied_hash_text = hash_password(password, raw_salt)
+    supplied_hash = decode_base64url(supplied_hash_text)
+    return hmac.compare_digest(expected_hash, supplied_hash)
+
+
+def get_user(username):
+    normalized = normalize_username(username)
+    if not normalized:
+        return None
+
+    with sqlite3.connect(USERS_DB_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        return connection.execute(
+            "SELECT username, password_salt, password_hash FROM users WHERE username = ?",
+            (normalized,),
+        ).fetchone()
+
+
+def create_user(username, password):
+    normalized = normalize_username(username)
+    salt_text, hash_text = hash_password(password)
+    with sqlite3.connect(USERS_DB_PATH) as connection:
+        connection.execute(
+            """
+            INSERT INTO users (username, password_salt, password_hash, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (normalized, salt_text, hash_text, int(time.time())),
+        )
+
+
+def authenticate_user(username, password):
+    normalized = normalize_username(username)
+    user = get_user(normalized)
+    if user and verify_password(password, user["password_salt"], user["password_hash"]):
+        return user["username"]
+
+    expected_username = normalize_username(os.environ.get("LOGIN_USERNAME", ""))
+    expected_password = os.environ.get("LOGIN_PASSWORD", "")
+    if expected_username and expected_password:
+        username_matches = hmac.compare_digest(normalized, expected_username)
+        password_matches = hmac.compare_digest(str(password), expected_password)
+        if username_matches and password_matches:
+            return expected_username
+
+    return None
+
+
 class SiteHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -77,11 +245,131 @@ class SiteHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def do_GET(self):
+        if self.request_path == "/api/session":
+            username = self.current_user()
+            self.send_json(
+                {
+                    "authenticated": bool(username),
+                    "username": username,
+                }
+            )
+            return
+
+        super().do_GET()
+
     def do_POST(self):
+        if self.request_path == "/api/signup":
+            self.handle_signup()
+            return
+
+        if self.request_path == "/api/login":
+            self.handle_login()
+            return
+
+        if self.request_path == "/api/logout":
+            self.send_json(
+                {
+                    "authenticated": False,
+                    "username": None,
+                },
+                headers={"Set-Cookie": build_session_cookie("", max_age=0)},
+            )
+            return
+
+        if self.request_path == "/api/quadratic":
+            self.handle_quadratic()
+            return
+
+        self.send_error(404, "Not found")
+
+    @property
+    def request_path(self):
+        return self.path.split("?", 1)[0]
+
+    def read_json(self):
+        length = int(self.headers.get("Content-Length", "0"))
+        return json.loads(self.rfile.read(length) or b"{}")
+
+    def current_user(self):
+        cookie = SimpleCookie(self.headers.get("Cookie", ""))
+        session = cookie.get(SESSION_COOKIE_NAME)
+        if not session:
+            return None
+
+        return verify_session_token(session.value)
+
+    def handle_login(self):
+        try:
+            payload = self.read_json()
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        if not get_session_secret():
+            self.send_json({"error": "Missing SESSION_SECRET environment variable."}, 500)
+            return
+
+        username = normalize_username(payload.get("username", ""))
+        password = str(payload.get("password", ""))
+        authenticated_username = authenticate_user(username, password)
+
+        if not authenticated_username:
+            self.send_json({"error": "Incorrect username or password."}, 401)
+            return
+
+        token = create_session_token(authenticated_username)
+        self.send_json(
+            {
+                "authenticated": True,
+                "username": authenticated_username,
+            },
+            headers={"Set-Cookie": build_session_cookie(token)},
+        )
+
+    def handle_signup(self):
+        try:
+            payload = self.read_json()
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        if not get_session_secret():
+            self.send_json({"error": "Missing SESSION_SECRET environment variable."}, 500)
+            return
+
+        username = normalize_username(payload.get("username", ""))
+        password = str(payload.get("password", ""))
+
+        if len(username) < 3 or " " in username:
+            self.send_json({"error": "Use an email or username with at least 3 characters and no spaces."}, 400)
+            return
+
+        if len(password) < 8:
+            self.send_json({"error": "Use a password with at least 8 characters."}, 400)
+            return
+
+        try:
+            create_user(username, password)
+        except sqlite3.IntegrityError:
+            self.send_json({"error": "That account already exists. Try logging in instead."}, 409)
+            return
+
+        token = create_session_token(username)
+        self.send_json(
+            {
+                "authenticated": True,
+                "username": username,
+            },
+            201,
+            headers={"Set-Cookie": build_session_cookie(token)},
+        )
+
+    def handle_quadratic(self):
         global last_request_time
 
-        if self.path != "/api/quadratic":
-            self.send_error(404, "Not found")
+        if not self.current_user():
+            self.send_json({"error": "Please log in or sign up to use Quadratic."}, 401)
             return
 
         now = time.time()
@@ -113,9 +401,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
             )
             return
 
-        length = int(self.headers.get("Content-Length", "0"))
         try:
-            payload = json.loads(self.rfile.read(length) or b"{}")
+            payload = self.read_json()
         except json.JSONDecodeError:
             self.send_json({"error": "Invalid JSON"}, 400)
             return
@@ -190,11 +477,14 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         self.send_json({"answer": extract_gemini_text(data), "raw": data})
 
-    def send_json(self, payload, status=200):
+    def send_json(self, payload, status=200, headers=None):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
+        if headers:
+            for key, value in headers.items():
+                self.send_header(key, value)
         self.end_headers()
         self.wfile.write(body)
 
@@ -219,9 +509,11 @@ def extract_gemini_text(data):
 
 if __name__ == "__main__":
     load_dotenv()
+    init_user_db()
     mimetypes.add_type("text/javascript", ".js")
     server = ThreadingHTTPServer((HOST, PORT), SiteHandler)
     print(f"Serving Aarush Lab on {HOST}:{PORT}")
     print("Quadratic backend is available at /api/quadratic")
+    print("Login API is available at /api/login")
     print(f"Using Gemini model: {os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')}")
     server.serve_forever()
