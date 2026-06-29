@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PORT = int(os.environ.get("PORT", "8001"))
+HOST = os.environ.get("HOST", "0.0.0.0")
 REQUEST_WINDOW_SECONDS = 60
 MAX_REQUESTS_PER_WINDOW = int(os.environ.get("GEMINI_RPM_LIMIT", "15"))
 COOLDOWN_SECONDS = float(os.environ.get("QUADRATIC_COOLDOWN_SECONDS", "1"))
@@ -219,8 +220,8 @@ def extract_gemini_text(data):
 if __name__ == "__main__":
     load_dotenv()
     mimetypes.add_type("text/javascript", ".js")
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), SiteHandler)
-    print(f"Serving Aarush Lab at http://127.0.0.1:{PORT}/")
+    server = ThreadingHTTPServer((HOST, PORT), SiteHandler)
+    print(f"Serving Aarush Lab on {HOST}:{PORT}")
     print("Quadratic backend is available at /api/quadratic")
     print(f"Using Gemini model: {os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')}")
     server.serve_forever()
