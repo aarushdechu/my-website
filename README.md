@@ -20,6 +20,7 @@ LOGIN_PASSWORD=your-login-password
 SESSION_SECRET=make-this-long-and-random
 COOKIE_SECURE=false
 USERS_DB_PATH=users.db
+PASSWORD_RESET_CODE=private-reset-code-for-password-resets
 ```
 
 On Render, add the same environment variables, but use `COOKIE_SECURE=true`.

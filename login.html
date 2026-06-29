@@ -33,9 +33,10 @@
       <h1 id="login-title">Log in</h1>
       <p class="auth-intro" id="auth-intro">Log in to unlock Quadratic.</p>
 
-      <div class="auth-tabs" role="tablist" aria-label="Choose login or sign up">
+      <div class="auth-tabs" role="tablist" aria-label="Choose account action">
         <button class="auth-tab is-active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Log in</button>
         <button class="auth-tab" type="button" data-auth-tab="signup" role="tab" aria-selected="false">Sign up</button>
+        <button class="auth-tab" type="button" data-auth-tab="reset" role="tab" aria-selected="false">Forgot</button>
       </div>
 
       <form class="auth-form" id="login-form" data-auth-panel="login" data-submit-text="Log in">
@@ -50,25 +51,63 @@
         </div>
 
         <button class="btn btn--coral auth-submit" type="submit">Log in</button>
+        <button class="auth-text-button" type="button" data-auth-tab="reset">Forgot password?</button>
       </form>
 
       <form class="auth-form" id="signup-form" data-auth-panel="signup" data-submit-text="Sign up" hidden>
+        <div class="auth-field">
+          <label for="signup-full-name">Delivery name</label>
+          <input id="signup-full-name" name="full-name" type="text" autocomplete="name" required />
+        </div>
+
         <div class="auth-field">
           <label for="signup-username">Email or username</label>
           <input id="signup-username" name="username" type="text" autocomplete="username" required />
         </div>
 
         <div class="auth-field">
+          <label for="signup-address">Delivery address</label>
+          <textarea id="signup-address" name="delivery-address" autocomplete="street-address" rows="3" required></textarea>
+        </div>
+
+        <div class="auth-field">
           <label for="signup-password">Password</label>
-          <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" required />
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="9" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{9,}" required />
+          <p class="auth-hint">Use more than 8 characters with uppercase, lowercase, a number, and a symbol.</p>
         </div>
 
         <div class="auth-field">
           <label for="signup-confirm-password">Confirm password</label>
-          <input id="signup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="8" required />
+          <input id="signup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="9" required />
         </div>
 
+        <p class="auth-hint">Use a delivery address only with grown-up permission.</p>
         <button class="btn btn--coral auth-submit" type="submit">Sign up</button>
+      </form>
+
+      <form class="auth-form" id="reset-form" data-auth-panel="reset" data-submit-text="Reset password" hidden>
+        <div class="auth-field">
+          <label for="reset-username">Email or username</label>
+          <input id="reset-username" name="username" type="text" autocomplete="username" required />
+        </div>
+
+        <div class="auth-field">
+          <label for="reset-code">Reset code</label>
+          <input id="reset-code" name="reset-code" type="password" autocomplete="one-time-code" required />
+        </div>
+
+        <div class="auth-field">
+          <label for="reset-password">New password</label>
+          <input id="reset-password" name="password" type="password" autocomplete="new-password" minlength="9" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{9,}" required />
+          <p class="auth-hint">Ask the site owner for the reset code, then choose a strong new password.</p>
+        </div>
+
+        <div class="auth-field">
+          <label for="reset-confirm-password">Confirm new password</label>
+          <input id="reset-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="9" required />
+        </div>
+
+        <button class="btn btn--coral auth-submit" type="submit">Reset password</button>
       </form>
 
       <p class="auth-message" id="login-message" role="status" aria-live="polite"></p>

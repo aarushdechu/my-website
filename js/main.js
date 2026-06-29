@@ -156,6 +156,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function validatePassword(password) {
+    const missing = [];
+
+    if (password.length <= 8) missing.push("more than 8 characters");
+    if (!/[a-z]/.test(password)) missing.push("a lowercase letter");
+    if (!/[A-Z]/.test(password)) missing.push("a capital letter");
+    if (!/\d/.test(password)) missing.push("a number");
+    if (!/[^A-Za-z0-9]/.test(password)) missing.push("a symbol");
+
+    return missing.length ? `Password needs ${missing.join(", ")}.` : "";
+  }
+
   authLinks.forEach((link) => {
     link.addEventListener("click", async (event) => {
       if (!authState.authenticated) return;
@@ -180,18 +192,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function selectAuthMode(mode) {
-    const selectedMode = mode === "signup" ? "signup" : "login";
+    const selectedMode = ["login", "signup", "reset"].includes(mode) ? mode : "login";
     const title = document.getElementById("login-title");
     const intro = document.getElementById("auth-intro");
+    const copy = {
+      login: {
+        title: "Log in",
+        intro: "Log in to unlock Quadratic.",
+      },
+      signup: {
+        title: "Sign up",
+        intro: "Create an account to unlock Quadratic and save delivery details for shop orders.",
+      },
+      reset: {
+        title: "Reset password",
+        intro: "Use the reset code to choose a new password.",
+      },
+    };
 
     if (title) {
-      title.textContent = selectedMode === "signup" ? "Sign up" : "Log in";
+      title.textContent = copy[selectedMode].title;
     }
 
     if (intro) {
-      intro.textContent = selectedMode === "signup"
-        ? "Create an account to unlock Quadratic."
-        : "Log in to unlock Quadratic.";
+      intro.textContent = copy[selectedMode].intro;
     }
 
     document.querySelectorAll("[data-auth-tab]").forEach((tab) => {
@@ -220,10 +244,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const username = form.querySelector('[name="username"]').value.trim();
     const password = form.querySelector('[name="password"]').value;
     const confirmPassword = form.querySelector('[name="confirm-password"]')?.value;
+    const fullName = form.querySelector('[name="full-name"]')?.value.trim();
+    const deliveryAddress = form.querySelector('[name="delivery-address"]')?.value.trim();
+    const resetCode = form.querySelector('[name="reset-code"]')?.value;
     const submitButton = form.querySelector('button[type="submit"]');
 
     if (!username || !password) {
       setAuthMessage("Enter your username and password.", "error");
+      return;
+    }
+
+    if (fullName !== undefined && fullName.length < 2) {
+      setAuthMessage("Enter a delivery name.", "error");
+      return;
+    }
+
+    if (deliveryAddress !== undefined && deliveryAddress.length < 8) {
+      setAuthMessage("Enter a delivery address for shop orders.", "error");
+      return;
+    }
+
+    if (resetCode !== undefined && !resetCode) {
+      setAuthMessage("Enter the reset code.", "error");
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (endpoint !== "/api/login" && passwordError) {
+      setAuthMessage(passwordError, "error");
       return;
     }
 
@@ -239,19 +287,26 @@ document.addEventListener("DOMContentLoaded", () => {
     setAuthMessage("Checking...", "");
 
     try {
+      const payload = { username, password };
+      if (fullName !== undefined) payload.fullName = fullName;
+      if (deliveryAddress !== undefined) payload.deliveryAddress = deliveryAddress;
+      if (resetCode !== undefined) payload.resetCode = resetCode;
+
       const data = await apiJson(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(payload),
       });
 
-      authState = data;
-      updateAuthLinks();
+      if (data.authenticated) {
+        authState = data;
+        updateAuthLinks();
+      }
       setAuthMessage(successText, "success");
       window.setTimeout(() => {
-        window.location.href = "index.html";
+        window.location.href = data.authenticated ? "index.html" : "login.html";
       }, 550);
     } catch (error) {
       setAuthMessage(error.message, "error");
@@ -276,6 +331,14 @@ document.addEventListener("DOMContentLoaded", () => {
     signupForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       submitCredentials(signupForm, "/api/signup", "Account created. Redirecting...");
+    });
+  }
+
+  const resetForm = document.getElementById("reset-form");
+  if (resetForm) {
+    resetForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      submitCredentials(resetForm, "/api/reset-password", "Password reset. Go log in.");
     });
   }
 

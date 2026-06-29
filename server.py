@@ -159,16 +159,49 @@ def init_user_db():
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
+                full_name TEXT NOT NULL DEFAULT '',
+                delivery_address TEXT NOT NULL DEFAULT '',
                 password_salt TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
                 created_at INTEGER NOT NULL
             )
             """
         )
+        existing_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(users)").fetchall()
+        }
+        if "full_name" not in existing_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN full_name TEXT NOT NULL DEFAULT ''")
+        if "delivery_address" not in existing_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN delivery_address TEXT NOT NULL DEFAULT ''")
 
 
 def normalize_username(username):
     return str(username or "").strip().lower()
+
+
+def clean_text(text):
+    return " ".join(str(text or "").strip().split())
+
+
+def validate_password_policy(password):
+    missing = []
+
+    if len(password) <= 8:
+        missing.append("more than 8 characters")
+    if not any(character.islower() for character in password):
+        missing.append("a lowercase letter")
+    if not any(character.isupper() for character in password):
+        missing.append("a capital letter")
+    if not any(character.isdigit() for character in password):
+        missing.append("a number")
+    if not any(not character.isalnum() for character in password):
+        missing.append("a symbol")
+
+    if not missing:
+        return ""
+
+    return "Password needs " + ", ".join(missing) + "."
 
 
 def hash_password(password, salt=None):
@@ -202,22 +235,41 @@ def get_user(username):
     with sqlite3.connect(USERS_DB_PATH) as connection:
         connection.row_factory = sqlite3.Row
         return connection.execute(
-            "SELECT username, password_salt, password_hash FROM users WHERE username = ?",
+            """
+            SELECT username, full_name, delivery_address, password_salt, password_hash
+            FROM users
+            WHERE username = ?
+            """,
             (normalized,),
         ).fetchone()
 
 
-def create_user(username, password):
+def create_user(username, password, full_name, delivery_address):
     normalized = normalize_username(username)
     salt_text, hash_text = hash_password(password)
     with sqlite3.connect(USERS_DB_PATH) as connection:
         connection.execute(
             """
-            INSERT INTO users (username, password_salt, password_hash, created_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO users (username, full_name, delivery_address, password_salt, password_hash, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (normalized, salt_text, hash_text, int(time.time())),
+            (normalized, full_name, delivery_address, salt_text, hash_text, int(time.time())),
         )
+
+
+def update_user_password(username, password):
+    normalized = normalize_username(username)
+    salt_text, hash_text = hash_password(password)
+    with sqlite3.connect(USERS_DB_PATH) as connection:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET password_salt = ?, password_hash = ?
+            WHERE username = ?
+            """,
+            (salt_text, hash_text, normalized),
+        )
+        return cursor.rowcount > 0
 
 
 def authenticate_user(username, password):
@@ -265,6 +317,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         if self.request_path == "/api/login":
             self.handle_login()
+            return
+
+        if self.request_path == "/api/reset-password":
+            self.handle_reset_password()
             return
 
         if self.request_path == "/api/logout":
@@ -340,17 +396,28 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         username = normalize_username(payload.get("username", ""))
         password = str(payload.get("password", ""))
+        full_name = clean_text(payload.get("fullName", ""))
+        delivery_address = clean_text(payload.get("deliveryAddress", ""))
 
         if len(username) < 3 or " " in username:
             self.send_json({"error": "Use an email or username with at least 3 characters and no spaces."}, 400)
             return
 
-        if len(password) < 8:
-            self.send_json({"error": "Use a password with at least 8 characters."}, 400)
+        if len(full_name) < 2:
+            self.send_json({"error": "Enter a delivery name."}, 400)
+            return
+
+        if len(delivery_address) < 8:
+            self.send_json({"error": "Enter a delivery address for shop orders."}, 400)
+            return
+
+        password_error = validate_password_policy(password)
+        if password_error:
+            self.send_json({"error": password_error}, 400)
             return
 
         try:
-            create_user(username, password)
+            create_user(username, password, full_name, delivery_address)
         except sqlite3.IntegrityError:
             self.send_json({"error": "That account already exists. Try logging in instead."}, 409)
             return
@@ -364,6 +431,37 @@ class SiteHandler(SimpleHTTPRequestHandler):
             201,
             headers={"Set-Cookie": build_session_cookie(token)},
         )
+
+    def handle_reset_password(self):
+        try:
+            payload = self.read_json()
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        reset_code = os.environ.get("PASSWORD_RESET_CODE", "")
+        if not reset_code:
+            self.send_json({"error": "Password reset is not configured yet."}, 500)
+            return
+
+        username = normalize_username(payload.get("username", ""))
+        supplied_code = str(payload.get("resetCode", ""))
+        new_password = str(payload.get("password", ""))
+
+        if not hmac.compare_digest(supplied_code, reset_code):
+            self.send_json({"error": "Incorrect reset code."}, 401)
+            return
+
+        password_error = validate_password_policy(new_password)
+        if password_error:
+            self.send_json({"error": password_error}, 400)
+            return
+
+        if not update_user_password(username, new_password):
+            self.send_json({"error": "No account found for that email or username."}, 404)
+            return
+
+        self.send_json({"ok": True, "message": "Password updated. You can log in now."})
 
     def handle_quadratic(self):
         global last_request_time
