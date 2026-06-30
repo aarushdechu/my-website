@@ -76,7 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function apiJson(url, options = {}) {
-    const response = await fetch(url, options);
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+    });
     const text = await response.text();
     let data = {};
 
@@ -514,6 +517,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    setAuthMessage("Checking Google sign-in...", "");
+
     try {
       const data = await apiJson("/api/google-login", {
         method: "POST",
@@ -524,6 +529,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       authState = data;
       updateAuthLinks();
+
+      const confirmedSession = await refreshSession();
+      if (!confirmedSession.authenticated) {
+        throw new Error("Google sign-in worked, but the browser did not save the login session. Check COOKIE_SECURE and use the HTTPS Render URL.");
+      }
+
       setAuthMessage("Signed in with Google. Redirecting...", "success");
       window.setTimeout(() => {
         window.location.href = "index.html";
@@ -549,6 +560,9 @@ document.addEventListener("DOMContentLoaded", () => {
       window.google.accounts.id.initialize({
         client_id: config.googleClientId,
         callback: handleGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        ux_mode: "popup",
       });
       window.google.accounts.id.renderButton(googleButton, {
         theme: "outline",
