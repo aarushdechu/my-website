@@ -145,15 +145,16 @@ def verify_session_token(token):
 
 
 def build_session_cookie(value, max_age=SESSION_SECONDS):
+    secure_cookie = os.environ.get("COOKIE_SECURE", "").lower() == "true"
     parts = [
         f"{SESSION_COOKIE_NAME}={value}",
         "Path=/",
         f"Max-Age={max_age}",
         "HttpOnly",
-        "SameSite=Lax",
+        "SameSite=None" if secure_cookie else "SameSite=Lax",
     ]
 
-    if os.environ.get("COOKIE_SECURE", "").lower() == "true":
+    if secure_cookie:
         parts.append("Secure")
 
     return "; ".join(parts)
