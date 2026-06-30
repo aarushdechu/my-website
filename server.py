@@ -246,9 +246,14 @@ def validate_password_policy(password):
 
 
 def get_smtp_settings():
+    try:
+        port = int(os.environ.get("SMTP_PORT", "587"))
+    except ValueError:
+        port = 587
+
     return {
         "host": os.environ.get("SMTP_HOST", ""),
-        "port": int(os.environ.get("SMTP_PORT", "587")),
+        "port": port,
         "username": os.environ.get("SMTP_USERNAME", ""),
         "password": os.environ.get("SMTP_PASSWORD", ""),
         "from_email": os.environ.get("SMTP_FROM", os.environ.get("SMTP_USERNAME", "")),
@@ -288,6 +293,10 @@ def send_email(to_email, subject, body):
         raise RuntimeError("The email server rejected the message. Try again later.") from error
     except smtplib.SMTPAuthenticationError as error:
         raise RuntimeError("Email sending is not configured correctly. Check the SMTP username/password.") from error
+    except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, TimeoutError, OSError) as error:
+        raise RuntimeError("Could not reach the email server. Check SMTP_HOST, SMTP_PORT, and SMTP_USE_TLS.") from error
+    except smtplib.SMTPException as error:
+        raise RuntimeError("Email sending failed. Check the SMTP settings and try again.") from error
 
     if refused:
         raise ValueError("That email address could not receive mail, so it looks invalid.")
@@ -518,7 +527,7 @@ def verify_google_credential(credential):
         from google.auth.transport import requests as google_requests
         from google.oauth2 import id_token
     except ImportError as error:
-        raise ValueError("Missing google-auth package. Run pip install -r requirements.txt.") from error
+        raise ValueError("Missing Google sign-in packages. Run pip install -r requirements.txt and redeploy.") from error
 
     idinfo = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
     issuer = idinfo.get("iss")
