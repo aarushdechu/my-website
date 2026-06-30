@@ -3,36 +3,151 @@
    Runs on every page. It: (1) opens/closes the phone menu,
    (2) fills the footer year, (3) builds the Shop cards.
 
-   ✏️  TO ADD OR CHANGE ITEMS: edit the SHOP_ITEMS list below.
+   ✏️  TO ADD OR CHANGE ITEMS: edit the SHOP_CATEGORIES list below.
    ===================================================================== */
 
-const SHOP_ITEMS = [
-  { emoji: "🕊️", name: "Origami crane",      desc: "Folded from pretty patterned paper. Great on a shelf.",   price: "$5",  status: "available" },
-  { emoji: "🐉", name: "Origami dragon",     desc: "My hardest fold. Looks awesome, takes me an hour.",       price: "$12", status: "available" },
-  { emoji: "🎨", name: "Mini canvas art",    desc: "A small painting — pick a color theme and I'll make it.", price: "$15", status: "available" },
-  { emoji: "✏️", name: "Custom doodle",      desc: "I'll draw your pet, your name, or anything you like.",    price: "$3",  status: "available" },
-  { emoji: "🔖", name: "Painted bookmark",   desc: "Handmade and laminated so it lasts.",                     price: "$4",  status: "available" },
-  { emoji: "🎁", name: "Surprise paper set", desc: "Five mystery origami pieces. You don't know what you'll get!", price: "$10", status: "soon" },
+const SHOP_CATEGORIES = [
+  {
+    name: "Origami",
+    emoji: "O",
+    desc: "Handmade paper folds, sorted like project folders.",
+    accent: "#efbd52",
+    deep: "#d9962d",
+    items: [
+      {
+        emoji: "B",
+        name: "Birds and Wings",
+        desc: "Flying folds with dramatic wings and display shapes.",
+        status: "available",
+        children: [
+          { emoji: "E", name: "Origami Eagle", desc: "A bold folded eagle with wide wings and a sharp beak.", status: "available", image: "images/shop/eagle-mywebsite-shop.png" },
+          { emoji: "P", name: "Origami Phoenix", desc: "A red and gold winged phoenix-style fold.", status: "available", image: "images/shop/pheonix-mywebsite-shop.png" },
+          { emoji: "Pa", name: "Origami Parrot", desc: "A tall blue bird fold with a perch-style display.", status: "available", image: "images/shop/parrot-mywebsite-shop.png" },
+        ],
+      },
+      {
+        emoji: "D",
+        name: "Origami Dragons",
+        desc: "Choose the dragon version you want.",
+        status: "available",
+        children: [
+          { emoji: "D1", name: "Dragon v1", desc: "Standing red dragon with wings and a simple strong pose.", status: "available", image: "images/shop/dragonv1-mywebsite-shop.png" },
+          { emoji: "D2", name: "Dragon v2", desc: "Sleeping red dragon, longer and lower to the table.", status: "available", image: "images/shop/dragonv2-mywebsite-shop.png" },
+          { emoji: "D3", name: "Dragon v3", desc: "Darker red dragon with a more detailed display look.", status: "available", image: "images/shop/dragonv3-mywebsite-shop.png" },
+        ],
+      },
+      {
+        emoji: "F",
+        name: "Origami Flowers",
+        desc: "Folded flowers in several styles.",
+        status: "available",
+        children: [
+          { emoji: "Da", name: "Daisy", desc: "Red and yellow flower in a paper pot.", status: "available", image: "images/shop/flowerdaisy-mywebsite-shop.png" },
+          { emoji: "Su", name: "Sunflower", desc: "Yellow petals with an orange center.", status: "available", image: "images/shop/flowersunflower-mywebsite-shop.png" },
+          { emoji: "Ro", name: "Rose", desc: "Dark red folded rose in a paper pot.", status: "available", image: "images/shop/flowerrose-mywebsite-shop.png" },
+          { emoji: "Li", name: "Lily", desc: "Pink folded lily with a tall stem.", status: "available", image: "images/shop/flowerlily-mywebsite-shop.png" },
+        ],
+      },
+      {
+        emoji: "Di",
+        name: "Origami Dinosaurs",
+        desc: "Green dinosaur folds with different body shapes.",
+        status: "available",
+        children: [
+          { emoji: "V", name: "Velociraptor", desc: "Longer-than-tall green dinosaur with a long tail.", status: "available", image: "images/shop/dinovelociraptor-mywebsite-shop.png" },
+          { emoji: "T", name: "T-Rex", desc: "Fatter green dinosaur with a bigger body.", status: "available", image: "images/shop/dinotrex-mywebsite-shop.png" },
+          { emoji: "Br", name: "Brachiosaurus / Brontosaurus", desc: "Tall-necked green dinosaur fold.", status: "available", image: "images/shop/dinobrachiosaurus-mywebsite-shop.png" },
+        ],
+      },
+      {
+        emoji: "A",
+        name: "Other Origami",
+        desc: "Small characters and custom name pieces.",
+        status: "available",
+        children: [
+          { emoji: "M", name: "Origami Mouse", desc: "Mouse fold with a pointed nose and round ears.", status: "available", image: "images/shop/mouse-mywebsite-shop.png" },
+          { emoji: "ABC", name: "Origami Alphabet Name", desc: "A custom name made from folded origami letters.", status: "available", image: "images/shop/alphabet-mywebsite-shop.png" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "Art",
+    emoji: "A",
+    desc: "Personalized drawings made for the person ordering.",
+    accent: "#f27d7d",
+    deep: "#dd555f",
+    items: [
+      { emoji: "C", name: "Personalized Caricature", desc: "A fun exaggerated portrait based on the person.", status: "available" },
+      { emoji: "M", name: "Personalized Manga", desc: "A manga-style character drawing made from your idea.", status: "available" },
+    ],
+  },
+  {
+    name: "Other",
+    emoji: "N",
+    desc: "A spot for future ideas.",
+    accent: "#7fd0c4",
+    deep: "#3aaea1",
+    items: [
+      { emoji: "+", name: "More coming soon", desc: "Aarush will add more items here later.", status: "soon" },
+    ],
+  },
 ];
 
-function shopCard(item) {
+function shopItemCard(item, nested = false) {
   const soon = item.status === "soon";
+  const folder = Boolean(item.children);
   const pill = soon
     ? '<span class="pill pill--soon">Coming soon</span>'
     : '<span class="pill pill--available">Available</span>';
+  const thumb = item.image
+    ? `<img class="thumb shop-photo" src="${item.image}" alt="${item.name}" onerror="this.nextElementSibling.hidden=false;this.remove()"><div class="thumb shop-letter" hidden>${item.emoji}</div>`
+    : `<div class="thumb shop-letter">${item.emoji}</div>`;
+  const price = item.price ? `<span class="price">${item.price}</span>` : "";
+
+  const action = folder
+    ? '<span class="shop-folder-label">Open folder below</span>'
+    : `<button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>`;
+
   return `
-    <article class="card">
-      <div class="thumb">${item.emoji}</div>
+    <article class="card shop-item-card ${nested ? "shop-item-card--nested" : ""} ${folder ? "shop-item-card--folder" : ""}">
+      ${thumb}
       <div class="body">
         <h3>${item.name}</h3>
         <p class="desc">${item.desc}</p>
         <div class="meta">
-          <span class="price">${item.price}</span>
+          ${price}
           ${pill}
         </div>
       </div>
-      <button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>
+      ${action}
     </article>`;
+}
+
+function shopCategory(category) {
+  const itemCount = category.items.reduce((count, item) => count + 1 + (item.children ? item.children.length : 0), 0);
+  const items = category.items.map((item) => {
+    const childItems = item.children
+      ? `<div class="shop-subitems" aria-label="${item.name} choices">${item.children.map(child => shopItemCard(child, true)).join("")}</div>`
+      : "";
+
+    return `${shopItemCard(item)}${childItems}`;
+  }).join("");
+
+  return `
+    <section class="shop-category" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
+      <button class="shop-category__header" type="button" aria-expanded="true">
+        <span class="shop-category__icon">${category.emoji}</span>
+        <span>
+          <strong>${category.name}</strong>
+          <small>${category.desc}</small>
+        </span>
+        <em>${itemCount} item${itemCount === 1 ? "" : "s"}</em>
+      </button>
+      <div class="shop-category__items">
+        ${items}
+      </div>
+    </section>`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -599,7 +714,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Build the shop grid (only on shop.html)
   const shopGrid = document.getElementById("shop-grid");
-  if (shopGrid) shopGrid.innerHTML = SHOP_ITEMS.map(shopCard).join("");
+  if (shopGrid) {
+    shopGrid.innerHTML = SHOP_CATEGORIES.map(shopCategory).join("");
+
+    shopGrid.addEventListener("click", (event) => {
+      const header = event.target.closest(".shop-category__header");
+      if (!header) return;
+
+      const category = header.closest(".shop-category");
+      const open = !category.classList.toggle("is-collapsed");
+      header.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
 
   // "Ask about this" button
   document.addEventListener("click", (e) => {
