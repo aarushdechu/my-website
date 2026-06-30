@@ -226,6 +226,12 @@ def public_user_payload(username):
     }
 
 
+def auth_response_payload(username, session_token):
+    payload = public_user_payload(username)
+    payload["sessionToken"] = session_token
+    return payload
+
+
 def validate_password_policy(password):
     missing = []
 
@@ -628,6 +634,12 @@ class SiteHandler(SimpleHTTPRequestHandler):
         return json.loads(self.rfile.read(length) or b"{}")
 
     def current_user(self):
+        authorization = self.headers.get("Authorization", "")
+        if authorization.startswith("Bearer "):
+            user = verify_session_token(authorization.removeprefix("Bearer ").strip())
+            if user:
+                return user
+
         cookie = SimpleCookie(self.headers.get("Cookie", ""))
         session = cookie.get(SESSION_COOKIE_NAME)
         if not session:
@@ -665,7 +677,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         token = create_session_token(authenticated_username)
         self.send_json(
-            public_user_payload(authenticated_username),
+            auth_response_payload(authenticated_username, token),
             headers={"Set-Cookie": build_session_cookie(token)},
         )
 
@@ -701,7 +713,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         token = create_session_token(username)
         self.send_json(
-            public_user_payload(username),
+            auth_response_payload(username, token),
             headers={"Set-Cookie": build_session_cookie(token)},
         )
 
@@ -746,7 +758,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         token = create_session_token(username)
         self.send_json(
-            public_user_payload(username),
+            auth_response_payload(username, token),
             201,
             headers={"Set-Cookie": build_session_cookie(token)},
         )

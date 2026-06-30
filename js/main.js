@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isLoginPage = Boolean(document.getElementById("login-form") || document.getElementById("signup-form"));
   const isQuadraticPage = window.location.pathname.endsWith("/math.html") || window.location.pathname.endsWith("/math");
   const authPromptKey = "aarush-auth-prompt-seen";
+  const authTokenKey = "aarush-auth-token";
   let authState = {
     authenticated: false,
     username: null,
@@ -76,9 +77,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function apiJson(url, options = {}) {
+    const headers = new Headers(options.headers || {});
+    const authToken = localStorage.getItem(authTokenKey);
+    if (authToken && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${authToken}`);
+    }
+
     const response = await fetch(url, {
       credentials: "same-origin",
       ...options,
+      headers,
     });
     const text = await response.text();
     let data = {};
@@ -118,6 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       authState = await apiJson("/api/session");
     } catch {
       authState = { authenticated: false, username: null, email: null, displayName: null, profileInitial: null };
+      localStorage.removeItem(authTokenKey);
     } finally {
       updateAuthLinks();
     }
@@ -172,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       await apiJson("/api/logout", { method: "POST" });
     } finally {
+      localStorage.removeItem(authTokenKey);
       authState = { authenticated: false, username: null, email: null, displayName: null, profileInitial: null };
       updateAuthLinks();
       window.location.href = "login.html";
@@ -372,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (data.authenticated) {
+        if (data.sessionToken) localStorage.setItem(authTokenKey, data.sessionToken);
         authState = data;
         updateAuthLinks();
       }
@@ -527,6 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({ credential: response.credential }),
       });
+      if (data.sessionToken) localStorage.setItem(authTokenKey, data.sessionToken);
       authState = data;
       updateAuthLinks();
 
