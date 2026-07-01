@@ -94,8 +94,42 @@ const SHOP_CATEGORIES = [
   },
 ];
 
+function slugifyProductName(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function shopProducts() {
+  const products = [];
+
+  SHOP_CATEGORIES.forEach((category) => {
+    category.items.forEach((item) => {
+      if (item.children) {
+        item.children.forEach((child) => {
+          products.push({
+            ...child,
+            slug: slugifyProductName(child.name),
+            category: category.name,
+            group: item.name,
+          });
+        });
+        return;
+      }
+
+      products.push({
+        ...item,
+        slug: slugifyProductName(item.name),
+        category: category.name,
+        group: "",
+      });
+    });
+  });
+
+  return products;
+}
+
 function shopItemCard(item, nested = false) {
   const soon = item.status === "soon";
+  const detailUrl = item.image ? `product.html?item=${slugifyProductName(item.name)}` : "";
   const pill = soon
     ? '<span class="pill pill--soon">Coming soon</span>'
     : '<span class="pill pill--available">Available</span>';
@@ -115,7 +149,9 @@ function shopItemCard(item, nested = false) {
           ${pill}
         </div>
       </div>
-      <button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>
+      ${detailUrl
+        ? `<a class="ask" href="${detailUrl}">View details</a>`
+        : `<button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>`}
     </article>`;
 }
 
@@ -159,6 +195,55 @@ function shopCategory(category) {
         ${items}
       </div>
     </section>`;
+}
+
+function renderProductDetail() {
+  const detail = document.getElementById("product-detail");
+  if (!detail) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("item") || "";
+  const product = shopProducts().find((item) => item.slug === slug);
+
+  if (!product || !product.image) {
+    detail.innerHTML = `
+      <div class="product-empty">
+        <span class="eyebrow">Shop item</span>
+        <h1>Item not found</h1>
+        <p>That origami item could not be found. Head back to the shop and choose one from a folder.</p>
+        <a class="btn" href="shop.html">Back to shop</a>
+      </div>`;
+    return;
+  }
+
+  const path = [product.category, product.group].filter(Boolean).join(" / ");
+
+  detail.innerHTML = `
+    <article class="product-detail-card">
+      <div class="product-photo-panel">
+        <img class="product-photo-large" src="${product.image}" alt="${product.name}">
+      </div>
+      <div class="product-info-panel">
+        <a class="product-back" href="shop.html">Back to shop</a>
+        <span class="eyebrow">${path}</span>
+        <h1>${product.name}</h1>
+        <p class="product-lead">${product.desc}</p>
+
+        <div class="buy-box">
+          <h2>Buying Info</h2>
+          <p>Price, pickup or delivery details, timing, and customization options will be added here later.</p>
+        </div>
+
+        <button class="btn btn--coral add-cart-preview" type="button">Add to cart</button>
+        <p class="cart-preview-note">Cart checkout is coming later. For now this button is just here so the page looks ready.</p>
+
+        <ul class="product-facts">
+          <li><b>Handmade:</b> each fold may differ slightly from the photo.</li>
+          <li><b>Made by:</b> Aarush Dechu.</li>
+          <li><b>Safety:</b> a grown-up helps handle payments and deliveries.</li>
+        </ul>
+      </div>
+    </article>`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -738,10 +823,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  renderProductDetail();
+
   // "Ask about this" button
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".ask");
     if (!btn) return;
+    if (btn.tagName === "A") return;
     const item = btn.dataset.item || "this";
     alert(
       `Awesome — you're interested in "${item}"!\n\n` +
