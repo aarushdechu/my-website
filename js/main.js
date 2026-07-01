@@ -96,7 +96,6 @@ const SHOP_CATEGORIES = [
 
 function shopItemCard(item, nested = false) {
   const soon = item.status === "soon";
-  const folder = Boolean(item.children);
   const pill = soon
     ? '<span class="pill pill--soon">Coming soon</span>'
     : '<span class="pill pill--available">Available</span>';
@@ -105,12 +104,8 @@ function shopItemCard(item, nested = false) {
     : `<div class="thumb shop-letter">${item.emoji}</div>`;
   const price = item.price ? `<span class="price">${item.price}</span>` : "";
 
-  const action = folder
-    ? '<span class="shop-folder-label">Open folder below</span>'
-    : `<button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>`;
-
   return `
-    <article class="card shop-item-card ${nested ? "shop-item-card--nested" : ""} ${folder ? "shop-item-card--folder" : ""}">
+    <article class="card shop-item-card ${nested ? "shop-item-card--nested" : ""}">
       ${thumb}
       <div class="body">
         <h3>${item.name}</h3>
@@ -120,30 +115,46 @@ function shopItemCard(item, nested = false) {
           ${pill}
         </div>
       </div>
-      ${action}
+      <button class="ask" data-item="${item.name}">${soon ? "Notify me" : "Ask about this"}</button>
     </article>`;
+}
+
+function shopFolderButton(folder, itemCount) {
+  return `
+    <button class="shop-folder-toggle" type="button" aria-expanded="false">
+      <span class="folder-art" aria-hidden="true">
+        <span class="folder-back"></span>
+        <span class="folder-paper folder-paper--one"></span>
+        <span class="folder-paper folder-paper--two"></span>
+        <span class="folder-front"></span>
+      </span>
+      <span class="folder-copy">
+        <strong>${folder.name}</strong>
+        <small>${folder.desc}</small>
+        <em>${itemCount} item${itemCount === 1 ? "" : "s"}</em>
+      </span>
+    </button>`;
+}
+
+function shopFolderGroup(item) {
+  return `
+    <section class="shop-folder-group is-collapsed">
+      ${shopFolderButton(item, item.children.length)}
+      <div class="shop-subitems" aria-label="${item.name} choices">
+        ${item.children.map(child => shopItemCard(child, true)).join("")}
+      </div>
+    </section>`;
 }
 
 function shopCategory(category) {
   const itemCount = category.items.reduce((count, item) => count + 1 + (item.children ? item.children.length : 0), 0);
   const items = category.items.map((item) => {
-    const childItems = item.children
-      ? `<div class="shop-subitems" aria-label="${item.name} choices">${item.children.map(child => shopItemCard(child, true)).join("")}</div>`
-      : "";
-
-    return `${shopItemCard(item)}${childItems}`;
+    return item.children ? shopFolderGroup(item) : shopItemCard(item);
   }).join("");
 
   return `
-    <section class="shop-category" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
-      <button class="shop-category__header" type="button" aria-expanded="true">
-        <span class="shop-category__icon">${category.emoji}</span>
-        <span>
-          <strong>${category.name}</strong>
-          <small>${category.desc}</small>
-        </span>
-        <em>${itemCount} item${itemCount === 1 ? "" : "s"}</em>
-      </button>
+    <section class="shop-category is-collapsed" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
+      ${shopFolderButton(category, itemCount)}
       <div class="shop-category__items">
         ${items}
       </div>
@@ -718,11 +729,11 @@ document.addEventListener("DOMContentLoaded", () => {
     shopGrid.innerHTML = SHOP_CATEGORIES.map(shopCategory).join("");
 
     shopGrid.addEventListener("click", (event) => {
-      const header = event.target.closest(".shop-category__header");
-      if (!header) return;
+      const header = event.target.closest(".shop-folder-toggle");
+      if (!header || event.target.closest(".ask")) return;
 
-      const category = header.closest(".shop-category");
-      const open = !category.classList.toggle("is-collapsed");
+      const folder = header.closest(".shop-category, .shop-folder-group");
+      const open = !folder.classList.toggle("is-collapsed");
       header.setAttribute("aria-expanded", open ? "true" : "false");
     });
   }
