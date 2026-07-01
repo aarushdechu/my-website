@@ -303,9 +303,9 @@ body.shop-page {
 .folder-art {
   position: relative;
   display: block;
-  height: 166px;
+  height: 154px;
   isolation: isolate;
-  filter: drop-shadow(0 16px 16px rgba(27,34,64,0.16));
+  filter: drop-shadow(0 14px 14px rgba(27,34,64,0.14));
 }
 
 .folder-back,
@@ -317,70 +317,93 @@ body.shop-page {
 }
 
 .folder-back {
-  left: 12px;
-  right: 18px;
-  top: 16px;
-  height: 112px;
+  left: 8px;
+  right: 8px;
+  top: 34px;
+  height: 82px;
   z-index: 1;
   border: 3px solid color-mix(in srgb, var(--folder-deep) 74%, var(--ink));
-  border-radius: 18px 18px 14px 14px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--folder-accent) 52%, #fff), color-mix(in srgb, var(--folder-accent) 76%, #fff));
-  clip-path: polygon(0 16%, 35% 16%, 38% 0, 63% 0, 68% 16%, 100% 16%, 100% 100%, 0 100%);
+  border-radius: 14px 14px 8px 8px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--folder-accent) 58%, #fff), color-mix(in srgb, var(--folder-accent) 80%, #fff));
+}
+
+.folder-back::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: -31px;
+  width: min(92px, 32%);
+  height: 31px;
+  border: 3px solid color-mix(in srgb, var(--folder-deep) 74%, var(--ink));
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  background: color-mix(in srgb, var(--folder-accent) 76%, #fff);
 }
 
 .folder-paper {
-  left: 28px;
-  right: 28px;
-  top: 60px;
-  height: 70px;
+  left: 26px;
+  right: 26px;
+  top: 56px;
+  height: 64px;
   z-index: 2;
-  border: 3px solid color-mix(in srgb, var(--folder-deep) 50%, #fff);
-  border-radius: 14px 14px 8px 8px;
+  border: 2px solid rgba(27,34,64,0.14);
+  border-bottom: 0;
+  border-radius: 12px 12px 4px 4px;
   background: rgba(255,255,255,0.94);
 }
 
 .folder-paper--one {
-  transform: translateY(3px) rotate(-1.5deg);
+  transform: translateY(5px) rotate(-1deg);
 }
 
 .folder-paper--two {
-  transform: translateY(10px) rotate(1.6deg);
+  transform: translateY(12px) rotate(0.9deg);
 }
 
 .folder-front {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100px;
+  left: 4px;
+  right: 4px;
+  bottom: 6px;
+  height: 78px;
   z-index: 3;
   border: 3px solid color-mix(in srgb, var(--folder-deep) 78%, var(--ink));
-  border-radius: 18px 18px 22px 22px;
+  border-radius: 14px 14px 18px 18px;
   background:
-    radial-gradient(circle at 78% 25%, rgba(255,255,255,0.2), transparent 34%),
+    linear-gradient(100deg, rgba(255,255,255,0.22), transparent 34%),
     linear-gradient(145deg, color-mix(in srgb, var(--folder-accent) 72%, #fff), var(--folder-accent));
   transform-origin: bottom center;
-  clip-path: polygon(6% 6%, 94% 6%, 100% 86%, 96% 100%, 4% 100%, 0 86%);
+}
+
+.folder-front::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: -3px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.34);
 }
 
 .shop-folder-toggle:hover .folder-paper--one,
 .shop-folder-toggle:hover .folder-paper--two {
-  transform: translateY(-8px) rotate(-0.8deg);
+  transform: translateY(-8px) rotate(-0.6deg);
 }
 
 .shop-folder-toggle:hover .folder-front {
-  transform: translateY(3px) rotateX(8deg);
+  transform: translateY(2px);
 }
 
 .shop-folder-toggle[aria-expanded="true"] .folder-paper--one {
-  transform: translateY(-16px) rotate(-1.2deg);
+  transform: translateY(-17px) rotate(-1deg);
 }
 
 .shop-folder-toggle[aria-expanded="true"] .folder-paper--two {
-  transform: translateY(-7px) rotate(1.4deg);
+  transform: translateY(-8px) rotate(0.9deg);
 }
 
 .shop-folder-toggle[aria-expanded="true"] .folder-front {
-  transform: translateY(5px) rotateX(12deg);
+  transform: translateY(3px);
 }
 
 .folder-copy {
@@ -433,26 +456,33 @@ body.shop-page {
 }
 
 .shop-folder-group .folder-art {
-  height: 126px;
+  height: 116px;
 }
 
 .shop-folder-group .folder-back {
-  top: 12px;
-  height: 84px;
+  top: 28px;
+  height: 60px;
   border-width: 2px;
-  border-radius: 14px;
+}
+
+.shop-folder-group .folder-back::before {
+  top: -23px;
+  height: 23px;
+  border-width: 2px;
+  border-bottom: 0;
 }
 
 .shop-folder-group .folder-paper {
-  top: 46px;
-  height: 52px;
+  top: 44px;
+  height: 46px;
   border-width: 2px;
 }
 
 .shop-folder-group .folder-front {
-  height: 74px;
+  bottom: 4px;
+  height: 56px;
   border-width: 2px;
-  border-radius: 14px 14px 18px 18px;
+  border-radius: 12px 12px 15px 15px;
 }
 
 .shop-folder-group .folder-copy strong {
