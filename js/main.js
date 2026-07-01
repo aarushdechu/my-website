@@ -20,9 +20,9 @@ const SHOP_CATEGORIES = [
         desc: "Flying folds with dramatic wings and display shapes.",
         status: "available",
         children: [
-          { emoji: "E", name: "Origami Eagle", desc: "A bold folded eagle with wide wings and a sharp beak.", status: "available", image: "images/shop/eagle-mywebsite-shop.png" },
-          { emoji: "P", name: "Origami Phoenix", desc: "A red and gold winged phoenix-style fold.", status: "available", image: "images/shop/pheonix-mywebsite-shop.png" },
-          { emoji: "Pa", name: "Origami Parrot", desc: "A tall blue bird fold with a perch-style display.", status: "available", image: "images/shop/parrot-mywebsite-shop.png" },
+          { emoji: "E", name: "Origami Eagle", desc: "A bold folded eagle with wide wings and a sharp beak.", status: "available", image: "images/shop/eagle-mywebsite-shop.png", thumbZoom: 1.5 },
+          { emoji: "P", name: "Origami Phoenix", desc: "A red and gold winged phoenix-style fold.", status: "available", image: "images/shop/pheonix-mywebsite-shop.png", thumbZoom: 1.65 },
+          { emoji: "Pa", name: "Origami Parrot", desc: "A tall blue bird fold with a perch-style display.", status: "available", image: "images/shop/parrot-mywebsite-shop.png", thumbZoom: 2.2 },
         ],
       },
       {
@@ -31,9 +31,9 @@ const SHOP_CATEGORIES = [
         desc: "Choose the dragon version you want.",
         status: "available",
         children: [
-          { emoji: "D1", name: "Dragon v1", desc: "Standing red dragon with wings and a simple strong pose.", status: "available", image: "images/shop/dragonv1-mywebsite-shop.png" },
-          { emoji: "D2", name: "Dragon v2", desc: "Sleeping red dragon, longer and lower to the table.", status: "available", image: "images/shop/dragonv2-mywebsite-shop.png" },
-          { emoji: "D3", name: "Dragon v3", desc: "Darker red dragon with a more detailed display look.", status: "available", image: "images/shop/dragonv3-mywebsite-shop.png" },
+          { emoji: "D1", name: "Dragon v1", desc: "Standing red dragon with wings and a simple strong pose.", status: "available", image: "images/shop/dragonv1-mywebsite-shop.png", thumbZoom: 1.35 },
+          { emoji: "D2", name: "Dragon v2", desc: "Sleeping red dragon, longer and lower to the table.", status: "available", image: "images/shop/dragonv2-mywebsite-shop.png", thumbZoom: 1.28 },
+          { emoji: "D3", name: "Dragon v3", desc: "Darker red dragon with a more detailed display look.", status: "available", image: "images/shop/dragonv3-mywebsite-shop.png", thumbZoom: 1.42 },
         ],
       },
       {
@@ -42,10 +42,10 @@ const SHOP_CATEGORIES = [
         desc: "Folded flowers in several styles.",
         status: "available",
         children: [
-          { emoji: "Da", name: "Daisy", desc: "Red and yellow flower in a paper pot.", status: "available", image: "images/shop/flowerdaisy-mywebsite-shop.png" },
-          { emoji: "Su", name: "Sunflower", desc: "Yellow petals with an orange center.", status: "available", image: "images/shop/flowersunflower-mywebsite-shop.png" },
-          { emoji: "Ro", name: "Rose", desc: "Dark red folded rose in a paper pot.", status: "available", image: "images/shop/flowerrose-mywebsite-shop.png" },
-          { emoji: "Li", name: "Lily", desc: "Pink folded lily with a tall stem.", status: "available", image: "images/shop/flowerlily-mywebsite-shop.png" },
+          { emoji: "Da", name: "Daisy", desc: "Red and yellow flower in a paper pot.", status: "available", image: "images/shop/flowerdaisy-mywebsite-shop.png", thumbZoom: 1.42 },
+          { emoji: "Su", name: "Sunflower", desc: "Yellow petals with an orange center.", status: "available", image: "images/shop/flowersunflower-mywebsite-shop.png", thumbZoom: 1.5 },
+          { emoji: "Ro", name: "Rose", desc: "Dark red folded rose in a paper pot.", status: "available", image: "images/shop/flowerrose-mywebsite-shop.png", thumbZoom: 1.38 },
+          { emoji: "Li", name: "Lily", desc: "Pink folded lily with a tall stem.", status: "available", image: "images/shop/flowerlily-mywebsite-shop.png", thumbZoom: 1.34 },
         ],
       },
       {
@@ -54,9 +54,9 @@ const SHOP_CATEGORIES = [
         desc: "Green dinosaur folds with different body shapes.",
         status: "available",
         children: [
-          { emoji: "V", name: "Velociraptor", desc: "Longer-than-tall green dinosaur with a long tail.", status: "available", image: "images/shop/dinovelociraptor-mywebsite-shop.png" },
-          { emoji: "T", name: "T-Rex", desc: "Fatter green dinosaur with a bigger body.", status: "available", image: "images/shop/dinotrex-mywebsite-shop.png" },
-          { emoji: "Br", name: "Brachiosaurus / Brontosaurus", desc: "Tall-necked green dinosaur fold.", status: "available", image: "images/shop/dinobrachiosaurus-mywebsite-shop.png" },
+          { emoji: "V", name: "Velociraptor", desc: "Longer-than-tall green dinosaur with a long tail.", status: "available", image: "images/shop/dinovelociraptor-mywebsite-shop.png", thumbZoom: 1.62 },
+          { emoji: "T", name: "T-Rex", desc: "Fatter green dinosaur with a bigger body.", status: "available", image: "images/shop/dinotrex-mywebsite-shop.png", thumbZoom: 1.48 },
+          { emoji: "Br", name: "Brachiosaurus / Brontosaurus", desc: "Tall-necked green dinosaur fold.", status: "available", image: "images/shop/dinobrachiosaurus-mywebsite-shop.png", thumbZoom: 1.42 },
         ],
       },
       {
@@ -65,8 +65,8 @@ const SHOP_CATEGORIES = [
         desc: "Small characters and custom name pieces.",
         status: "available",
         children: [
-          { emoji: "M", name: "Origami Mouse", desc: "Mouse fold with a pointed nose and round ears.", status: "available", image: "images/shop/mouse-mywebsite-shop.png" },
-          { emoji: "ABC", name: "Origami Alphabet Name", desc: "A custom name made from folded origami letters.", status: "available", image: "images/shop/alphabet-mywebsite-shop.png" },
+          { emoji: "M", name: "Origami Mouse", desc: "Mouse fold with a pointed nose and round ears.", status: "available", image: "images/shop/mouse-mywebsite-shop.png", thumbZoom: 1.8 },
+          { emoji: "ABC", name: "Origami Alphabet Name", desc: "A custom name made from folded origami letters.", status: "available", image: "images/shop/alphabet-mywebsite-shop.png", thumbZoom: 1.45 },
         ],
       },
     ],
@@ -134,7 +134,7 @@ function shopItemCard(item, nested = false) {
     ? '<span class="pill pill--soon">Coming soon</span>'
     : '<span class="pill pill--available">Available</span>';
   const thumb = item.image
-    ? `<img class="thumb shop-photo" src="${item.image}" alt="${item.name}" onerror="this.nextElementSibling.hidden=false;this.remove()"><div class="thumb shop-letter" hidden>${item.emoji}</div>`
+    ? `<div class="thumb shop-photo-frame"><img class="shop-photo" src="${item.image}" alt="${item.name}" style="--thumb-zoom:${item.thumbZoom || 1.2}" onerror="this.nextElementSibling.hidden=false;this.remove()"><div class="shop-letter" hidden>${item.emoji}</div></div>`
     : `<div class="thumb shop-letter">${item.emoji}</div>`;
   const price = item.price ? `<span class="price">${item.price}</span>` : "";
 
