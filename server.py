@@ -48,7 +48,7 @@ SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", str(7 * 24 * 60 * 60)))
 PASSWORD_ITERATIONS = 210_000
 RESET_CODE_SECONDS = int(os.environ.get("RESET_CODE_SECONDS", "600"))
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-SMTP_TIMEOUT_SECONDS = 12
+SMTP_TIMEOUT_SECONDS = 20
 USERS_DB_PATH = Path(os.environ.get("USERS_DB_PATH", "users.db"))
 if not USERS_DB_PATH.is_absolute():
     USERS_DB_PATH = ROOT / USERS_DB_PATH
@@ -257,7 +257,7 @@ def validate_password_policy(password):
 
 def get_smtp_settings():
     try:
-        port = int(os.environ.get("SMTP_PORT", "587"))
+        port = int(os.environ.get("SMTP_PORT", "587").strip())
     except ValueError:
         port = 587
 
@@ -272,13 +272,15 @@ def get_smtp_settings():
             security = "starttls"
         else:
             security = "none"
+    elif port == 465 and security == "starttls":
+        security = "ssl"
 
     return {
-        "host": os.environ.get("SMTP_HOST", ""),
+        "host": os.environ.get("SMTP_HOST", "").strip(),
         "port": port,
-        "username": os.environ.get("SMTP_USERNAME", ""),
-        "password": os.environ.get("SMTP_PASSWORD", ""),
-        "from_email": os.environ.get("SMTP_FROM", os.environ.get("SMTP_USERNAME", "")),
+        "username": os.environ.get("SMTP_USERNAME", "").strip(),
+        "password": os.environ.get("SMTP_PASSWORD", "").strip(),
+        "from_email": os.environ.get("SMTP_FROM", os.environ.get("SMTP_USERNAME", "")).strip(),
         "security": security,
     }
 
@@ -323,12 +325,15 @@ def send_email(to_email, subject, body):
     except smtplib.SMTPAuthenticationError as error:
         raise RuntimeError("Email sending is not configured correctly. Check the SMTP username/password.") from error
     except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, TimeoutError, OSError) as error:
+        detail = f"{error.__class__.__name__}: {error}"
         raise RuntimeError(
             "Could not reach the email server. For Gmail, set SMTP_HOST=smtp.gmail.com, "
-            "SMTP_PORT=587, SMTP_SECURITY=starttls, and use a Gmail app password."
+            "SMTP_PORT=587, SMTP_SECURITY=starttls, and use a Gmail app password. "
+            f"Details: {detail}"
         ) from error
     except smtplib.SMTPException as error:
-        raise RuntimeError("Email sending failed. Check the SMTP settings and try again.") from error
+        detail = f"{error.__class__.__name__}: {error}"
+        raise RuntimeError(f"Email sending failed. Check the SMTP settings and try again. Details: {detail}") from error
 
     if refused:
         raise ValueError("That email address could not receive mail, so it looks invalid.")
