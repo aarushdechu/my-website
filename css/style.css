@@ -860,13 +860,54 @@ body.shop-page {
   padding: 12px;
 }
 
-.checkout-form fieldset label {
+.checkout-form legend {
+  padding: 0 6px;
+}
+
+.checkout-options {
+  display: grid;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.checkout-options--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.checkout-options label {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-body);
-  font-weight: 500;
+  gap: 10px;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 2px solid var(--crease);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.78);
+  cursor: pointer;
   color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.checkout-options label:has(input:checked) {
+  border-color: var(--teal);
+  background: rgba(21,183,164,0.12);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(21,183,164,0.18);
+}
+
+.checkout-options input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: var(--teal);
+}
+
+.checkout-options span {
+  display: block;
+  min-width: 0;
 }
 
 .checkout-form input,
@@ -1591,6 +1632,9 @@ body.shop-page {
   .cart-drawer__panel {
     width: 100%;
     padding: 20px;
+  }
+  .checkout-options--two {
+    grid-template-columns: 1fr;
   }
 }
 

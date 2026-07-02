@@ -374,8 +374,10 @@ document.addEventListener("DOMContentLoaded", () => {
           </label>
           <fieldset>
             <legend>How should you get it?</legend>
-            <label><input type="radio" name="fulfillment" value="pickup" checked> Pickup</label>
-            <label><input type="radio" name="fulfillment" value="delivery"> Delivery</label>
+            <div class="checkout-options checkout-options--two">
+              <label><input type="radio" name="fulfillment" value="pickup" checked><span>Pickup</span></label>
+              <label><input type="radio" name="fulfillment" value="delivery"><span>Delivery</span></label>
+            </div>
           </fieldset>
           <label data-address-field hidden>
             Delivery address
@@ -383,9 +385,11 @@ document.addEventListener("DOMContentLoaded", () => {
           </label>
           <fieldset>
             <legend>Payment plan</legend>
-            <label><input type="radio" name="payment-plan" value="later" checked> Confirm payment later</label>
-            <label><input type="radio" name="payment-plan" value="paypal-later"> PayPal link later</label>
-            <label><input type="radio" name="payment-plan" value="cash"> Cash with grown-up approval</label>
+            <div class="checkout-options">
+              <label><input type="radio" name="payment-plan" value="later" checked><span>Confirm payment later</span></label>
+              <label><input type="radio" name="payment-plan" value="paypal-later"><span>PayPal link later</span></label>
+              <label><input type="radio" name="payment-plan" value="cash"><span>Cash with grown-up approval</span></label>
+            </div>
           </fieldset>
           <label>
             Notes
