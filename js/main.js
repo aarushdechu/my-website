@@ -234,8 +234,8 @@ function renderProductDetail() {
           <p>Price, pickup or delivery details, timing, and customization options will be added here later.</p>
         </div>
 
-        <button class="btn btn--coral add-cart-preview" type="button">Add to cart</button>
-        <p class="cart-preview-note">Cart checkout is coming later. For now this button is just here so the page looks ready.</p>
+        <button class="btn btn--coral add-cart-preview" type="button" data-add-cart="${product.slug}">Add to cart</button>
+        <p class="cart-preview-note">Checkout is an order request for now. Real online payment will be connected later.</p>
 
         <ul class="product-facts">
           <li><b>Handmade:</b> each fold may differ slightly from the photo.</li>
@@ -267,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isQuadraticPage = window.location.pathname.endsWith("/math.html") || window.location.pathname.endsWith("/math");
   const authPromptKey = "aarush-auth-prompt-seen";
   const authTokenKey = "aarush-auth-token";
+  const cartStorageKey = "aarush-shop-cart";
   let authState = {
     authenticated: false,
     username: null,
@@ -274,6 +275,260 @@ document.addEventListener("DOMContentLoaded", () => {
     displayName: null,
     profileInitial: null,
   };
+
+  function loadCart() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(cartStorageKey) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveCart(items) {
+    localStorage.setItem(cartStorageKey, JSON.stringify(items));
+  }
+
+  function cartProducts() {
+    const productsBySlug = new Map(shopProducts().map((product) => [product.slug, product]));
+    return loadCart()
+      .map((entry) => {
+        const product = productsBySlug.get(entry.slug);
+        return product ? { ...product, quantity: entry.quantity || 1 } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function playKaChing() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+
+      const audio = new AudioContext();
+      const now = audio.currentTime;
+      const gain = audio.createGain();
+      gain.connect(audio.destination);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+
+      [880, 1175, 1568].forEach((frequency, index) => {
+        const oscillator = audio.createOscillator();
+        oscillator.type = index === 2 ? "triangle" : "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + index * 0.055);
+        oscillator.connect(gain);
+        oscillator.start(now + index * 0.055);
+        oscillator.stop(now + 0.35 + index * 0.04);
+      });
+
+      window.setTimeout(() => audio.close(), 700);
+    } catch {
+      // Sound is optional; the cart still works if audio is blocked.
+    }
+  }
+
+  function getCartButton() {
+    let button = document.getElementById("cart-fab");
+    if (button) return button;
+
+    button = document.createElement("button");
+    button.id = "cart-fab";
+    button.className = "cart-fab";
+    button.type = "button";
+    button.setAttribute("aria-label", "Open cart");
+    button.innerHTML = `<span aria-hidden="true">Cart</span><b data-cart-count>0</b>`;
+    document.body.append(button);
+    button.addEventListener("click", () => showCartDrawer(true));
+    return button;
+  }
+
+  function getCartDrawer() {
+    let drawer = document.getElementById("cart-drawer");
+    if (drawer) return drawer;
+
+    drawer = document.createElement("aside");
+    drawer.id = "cart-drawer";
+    drawer.className = "cart-drawer";
+    drawer.hidden = true;
+    drawer.innerHTML = `
+      <div class="cart-drawer__backdrop" data-cart-close></div>
+      <section class="cart-drawer__panel" aria-label="Shopping cart">
+        <div class="cart-drawer__top">
+          <div>
+            <span class="eyebrow">Shop cart</span>
+            <h2>Your cart</h2>
+          </div>
+          <button class="cart-close" type="button" data-cart-close aria-label="Close cart">×</button>
+        </div>
+        <div class="cart-items" data-cart-items></div>
+        <form class="checkout-form" id="checkout-form">
+          <h3>Order request</h3>
+          <p>This does not charge money yet. A grown-up will help confirm payment later.</p>
+          <label>
+            Name
+            <input type="text" name="customer-name" placeholder="Your name" required>
+          </label>
+          <label>
+            Email
+            <input type="email" name="customer-email" placeholder="someone@example.com" required>
+          </label>
+          <fieldset>
+            <legend>How should you get it?</legend>
+            <label><input type="radio" name="fulfillment" value="pickup" checked> Pickup</label>
+            <label><input type="radio" name="fulfillment" value="delivery"> Delivery</label>
+          </fieldset>
+          <label data-address-field hidden>
+            Delivery address
+            <textarea name="address" rows="3" placeholder="Street, city, state, ZIP"></textarea>
+          </label>
+          <fieldset>
+            <legend>Payment plan</legend>
+            <label><input type="radio" name="payment-plan" value="later" checked> Confirm payment later</label>
+            <label><input type="radio" name="payment-plan" value="paypal-later"> PayPal link later</label>
+            <label><input type="radio" name="payment-plan" value="cash"> Cash with grown-up approval</label>
+          </fieldset>
+          <label>
+            Notes
+            <textarea name="notes" rows="3" placeholder="Colors, custom name, timing, or questions"></textarea>
+          </label>
+          <button class="btn btn--coral" type="submit">Submit order request</button>
+          <p class="checkout-message" data-checkout-message></p>
+        </form>
+      </section>`;
+
+    document.body.append(drawer);
+    drawer.addEventListener("click", (event) => {
+      if (event.target.closest("[data-cart-close]")) showCartDrawer(false);
+    });
+    drawer.querySelectorAll('input[name="fulfillment"]').forEach((input) => {
+      input.addEventListener("change", () => updateAddressVisibility(drawer));
+    });
+    drawer.querySelector("#checkout-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = drawer.querySelector("[data-checkout-message]");
+      message.textContent = "Order request saved for now. Real sending/payment will be connected later.";
+      message.classList.add("success");
+    });
+    return drawer;
+  }
+
+  function updateAddressVisibility(drawer = getCartDrawer()) {
+    const delivery = drawer.querySelector('input[name="fulfillment"][value="delivery"]').checked;
+    const addressField = drawer.querySelector("[data-address-field]");
+    const textarea = addressField.querySelector("textarea");
+    addressField.hidden = !delivery;
+    textarea.required = delivery;
+  }
+
+  function renderCartItems(drawer = getCartDrawer()) {
+    const itemsWrap = drawer.querySelector("[data-cart-items]");
+    const items = cartProducts();
+
+    if (!items.length) {
+      itemsWrap.innerHTML = `<p class="cart-empty">Your cart is empty. Add an origami item first.</p>`;
+      drawer.querySelector("#checkout-form").hidden = true;
+      return;
+    }
+
+    drawer.querySelector("#checkout-form").hidden = false;
+    itemsWrap.innerHTML = items.map((item) => `
+      <article class="cart-line">
+        <img src="${item.image}" alt="${item.name}">
+        <div>
+          <strong>${item.name}</strong>
+          <span>${item.group || item.category}</span>
+          <div class="cart-line__actions">
+            <button type="button" data-cart-minus="${item.slug}" aria-label="Remove one ${item.name}">−</button>
+            <b>${item.quantity}</b>
+            <button type="button" data-cart-plus="${item.slug}" aria-label="Add one ${item.name}">+</button>
+            <button type="button" data-cart-remove="${item.slug}">Remove</button>
+          </div>
+        </div>
+      </article>`).join("");
+  }
+
+  function updateCartUI() {
+    const total = loadCart().reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const button = getCartButton();
+    button.classList.toggle("has-items", total > 0);
+    button.querySelector("[data-cart-count]").textContent = total;
+
+    const drawer = document.getElementById("cart-drawer");
+    if (drawer) renderCartItems(drawer);
+  }
+
+  function changeCartQuantity(slug, delta) {
+    const cart = loadCart();
+    const existing = cart.find((item) => item.slug === slug);
+    if (!existing) return;
+
+    existing.quantity += delta;
+    saveCart(cart.filter((item) => item.quantity > 0));
+    updateCartUI();
+  }
+
+  function removeFromCart(slug) {
+    saveCart(loadCart().filter((item) => item.slug !== slug));
+    updateCartUI();
+  }
+
+  function addToCart(slug) {
+    const product = shopProducts().find((item) => item.slug === slug);
+    if (!product) return;
+
+    const cart = loadCart();
+    const existing = cart.find((item) => item.slug === slug);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cart.push({ slug, quantity: 1 });
+    }
+
+    saveCart(cart);
+    updateCartUI();
+    playKaChing();
+    getCartButton().classList.add("cart-pop");
+    window.setTimeout(() => getCartButton().classList.remove("cart-pop"), 450);
+    showCartDrawer(true);
+  }
+
+  function showCartDrawer(open) {
+    const drawer = getCartDrawer();
+    if (open) {
+      renderCartItems(drawer);
+      updateAddressVisibility(drawer);
+      drawer.hidden = false;
+      return;
+    }
+    drawer.hidden = true;
+  }
+
+  document.addEventListener("click", (event) => {
+    const addButton = event.target.closest("[data-add-cart]");
+    if (addButton) {
+      addToCart(addButton.dataset.addCart);
+      return;
+    }
+
+    const plus = event.target.closest("[data-cart-plus]");
+    if (plus) {
+      changeCartQuantity(plus.dataset.cartPlus, 1);
+      return;
+    }
+
+    const minus = event.target.closest("[data-cart-minus]");
+    if (minus) {
+      changeCartQuantity(minus.dataset.cartMinus, -1);
+      return;
+    }
+
+    const remove = event.target.closest("[data-cart-remove]");
+    if (remove) {
+      removeFromCart(remove.dataset.cartRemove);
+    }
+  });
+
+  updateCartUI();
 
   function setAuthMessage(text, type = "") {
     const message = document.getElementById("login-message");
