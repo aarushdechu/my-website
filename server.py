@@ -290,7 +290,59 @@ def smtp_is_configured():
     return all(settings[key] for key in ("host", "username", "password", "from_email"))
 
 
-def send_email(to_email, subject, body):
+def get_email_provider():
+    return os.environ.get("EMAIL_PROVIDER", "auto").strip().lower()
+
+
+def resend_is_configured():
+    return bool(os.environ.get("RESEND_API_KEY", "").strip())
+
+
+def get_resend_from_email():
+    return (
+        os.environ.get("RESEND_FROM", "").strip()
+        or os.environ.get("SMTP_FROM", "").strip()
+        or os.environ.get("SMTP_USERNAME", "").strip()
+    )
+
+
+def send_email_with_resend(to_email, subject, body):
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    from_email = get_resend_from_email()
+
+    if not api_key or not from_email:
+        raise RuntimeError("Resend email is not configured. Add RESEND_API_KEY and RESEND_FROM in Render.")
+
+    request_body = {
+        "from": from_email,
+        "to": [to_email],
+        "subject": subject,
+        "text": body,
+    }
+    request = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(request_body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=SMTP_TIMEOUT_SECONDS) as response:
+            response.read()
+    except urllib.error.HTTPError as error:
+        message = error.read().decode("utf-8", "replace")
+        if error.code in (400, 422):
+            raise ValueError(f"That email could not be sent. Resend said: {message}") from error
+        raise RuntimeError(f"Resend email failed with HTTP {error.code}: {message}") from error
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        detail = f"{error.__class__.__name__}: {error}"
+        raise RuntimeError(f"Could not reach the Resend email API over HTTPS. Details: {detail}") from error
+
+
+def send_email_with_smtp(to_email, subject, body):
     if not smtp_is_configured():
         raise RuntimeError(
             "Email sending is not configured yet. Add SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM in Render."
@@ -337,6 +389,16 @@ def send_email(to_email, subject, body):
 
     if refused:
         raise ValueError("That email address could not receive mail, so it looks invalid.")
+
+
+def send_email(to_email, subject, body):
+    provider = get_email_provider()
+
+    if provider == "resend" or (provider == "auto" and resend_is_configured()):
+        send_email_with_resend(to_email, subject, body)
+        return
+
+    send_email_with_smtp(to_email, subject, body)
 
 
 def hash_password(password, salt=None):
