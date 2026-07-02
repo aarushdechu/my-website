@@ -19,6 +19,23 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+
+def load_dotenv():
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_dotenv()
+
 PORT = int(os.environ.get("PORT", "8001"))
 HOST = os.environ.get("HOST", "0.0.0.0")
 REQUEST_WINDOW_SECONDS = 60
@@ -39,20 +56,6 @@ request_times = deque()
 email_verification_codes = {}
 password_reset_codes = {}
 last_request_time = 0.0
-
-
-def load_dotenv():
-    env_path = ROOT / ".env"
-    if not env_path.exists():
-        return
-
-    for line in env_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def build_tutor_input(payload):
@@ -258,13 +261,25 @@ def get_smtp_settings():
     except ValueError:
         port = 587
 
+    security = os.environ.get("SMTP_SECURITY", "auto").strip().lower()
+    use_tls = os.environ.get("SMTP_USE_TLS", "true").lower() == "true"
+    if security not in {"auto", "starttls", "ssl", "none"}:
+        security = "auto"
+    if security == "auto":
+        if port == 465:
+            security = "ssl"
+        elif use_tls:
+            security = "starttls"
+        else:
+            security = "none"
+
     return {
         "host": os.environ.get("SMTP_HOST", ""),
         "port": port,
         "username": os.environ.get("SMTP_USERNAME", ""),
         "password": os.environ.get("SMTP_PASSWORD", ""),
         "from_email": os.environ.get("SMTP_FROM", os.environ.get("SMTP_USERNAME", "")),
-        "use_tls": os.environ.get("SMTP_USE_TLS", "true").lower() == "true",
+        "security": security,
     }
 
 
@@ -287,9 +302,16 @@ def send_email(to_email, subject, body):
     message.set_content(body)
 
     try:
-        with smtplib.SMTP(settings["host"], settings["port"], timeout=SMTP_TIMEOUT_SECONDS) as server:
-            if settings["use_tls"]:
+        if settings["security"] == "ssl":
+            smtp_class = smtplib.SMTP_SSL
+        else:
+            smtp_class = smtplib.SMTP
+
+        with smtp_class(settings["host"], settings["port"], timeout=SMTP_TIMEOUT_SECONDS) as server:
+            if settings["security"] == "starttls":
+                server.ehlo()
                 server.starttls()
+                server.ehlo()
             server.login(settings["username"], settings["password"])
             refused = server.send_message(message)
     except smtplib.SMTPRecipientsRefused as error:
@@ -301,7 +323,10 @@ def send_email(to_email, subject, body):
     except smtplib.SMTPAuthenticationError as error:
         raise RuntimeError("Email sending is not configured correctly. Check the SMTP username/password.") from error
     except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, TimeoutError, OSError) as error:
-        raise RuntimeError("Could not reach the email server. Check SMTP_HOST, SMTP_PORT, and SMTP_USE_TLS.") from error
+        raise RuntimeError(
+            "Could not reach the email server. For Gmail, set SMTP_HOST=smtp.gmail.com, "
+            "SMTP_PORT=587, SMTP_SECURITY=starttls, and use a Gmail app password."
+        ) from error
     except smtplib.SMTPException as error:
         raise RuntimeError("Email sending failed. Check the SMTP settings and try again.") from error
 
@@ -1022,7 +1047,6 @@ def extract_gemini_text(data):
 
 
 if __name__ == "__main__":
-    load_dotenv()
     init_user_db()
     mimetypes.add_type("text/javascript", ".js")
     server = ThreadingHTTPServer((HOST, PORT), SiteHandler)
