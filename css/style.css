@@ -876,7 +876,8 @@ body.shop-page {
 
 .checkout-options label {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   min-height: 46px;
@@ -901,6 +902,7 @@ body.shop-page {
 .checkout-options input {
   width: 18px;
   height: 18px;
+  min-width: 18px;
   flex: 0 0 auto;
   accent-color: var(--teal);
 }
@@ -908,9 +910,10 @@ body.shop-page {
 .checkout-options span {
   display: block;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.checkout-form input,
+.checkout-form input:not([type="radio"]),
 .checkout-form textarea {
   width: 100%;
   border: 2px solid var(--crease);
@@ -921,7 +924,7 @@ body.shop-page {
   padding: 11px 12px;
 }
 
-.checkout-form input:focus,
+.checkout-form input:not([type="radio"]):focus,
 .checkout-form textarea:focus {
   border-color: var(--violet);
   outline: 3px solid rgba(123,108,246,0.16);
