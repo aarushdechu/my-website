@@ -45,10 +45,16 @@ COOLDOWN_SECONDS = float(os.environ.get("QUADRATIC_COOLDOWN_SECONDS", "1"))
 MAX_HISTORY_MESSAGES = int(os.environ.get("QUADRATIC_HISTORY_MESSAGES", "6"))
 MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "900"))
 SESSION_COOKIE_NAME = "aarush_session"
+VISITOR_COOKIE_NAME = "aarush_visitor"
 SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", str(7 * 24 * 60 * 60)))
+VISITOR_SECONDS = int(os.environ.get("VISITOR_SECONDS", str(180 * 24 * 60 * 60)))
 PASSWORD_ITERATIONS = 210_000
 RESET_CODE_SECONDS = int(os.environ.get("RESET_CODE_SECONDS", "600"))
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+BOT_USER_AGENT_PATTERN = re.compile(
+    r"bot|crawl|spider|preview|slurp|facebookexternalhit|whatsapp|telegram|discord|uptime|monitor|curl|python-urllib",
+    re.IGNORECASE,
+)
 SMTP_TIMEOUT_SECONDS = 20
 USERS_DB_PATH = Path(os.environ.get("USERS_DB_PATH", "users.db"))
 if not USERS_DB_PATH.is_absolute():
@@ -63,6 +69,7 @@ last_request_time = 0.0
 stats_lock = threading.Lock()
 DEFAULT_STATS = {
     "visits": 0,
+    "uniqueVisitors": 0,
     "productsSold": 0,
     "quadraticMessages": 0,
 }
@@ -199,19 +206,33 @@ def verify_session_token(token):
 
 
 def build_session_cookie(value, max_age=SESSION_SECONDS):
+    return build_cookie(SESSION_COOKIE_NAME, value, max_age, http_only=True)
+
+
+def build_visitor_cookie(value, max_age=VISITOR_SECONDS):
+    return build_cookie(VISITOR_COOKIE_NAME, value, max_age, http_only=True)
+
+
+def build_cookie(name, value, max_age, http_only=False):
     secure_cookie = os.environ.get("COOKIE_SECURE", "").lower() == "true"
     parts = [
-        f"{SESSION_COOKIE_NAME}={value}",
+        f"{name}={value}",
         "Path=/",
         f"Max-Age={max_age}",
-        "HttpOnly",
         "SameSite=None" if secure_cookie else "SameSite=Lax",
     ]
+
+    if http_only:
+        parts.append("HttpOnly")
 
     if secure_cookie:
         parts.append("Secure")
 
     return "; ".join(parts)
+
+
+def is_probably_bot(user_agent):
+    return bool(BOT_USER_AGENT_PATTERN.search(user_agent or ""))
 
 
 def init_user_db():
@@ -701,10 +722,13 @@ def verify_google_credential(credential):
 
 class SiteHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
+        self.extra_headers = []
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
+        for key, value in self.extra_headers:
+            self.send_header(key, value)
         super().end_headers()
 
     def do_GET(self):
@@ -730,7 +754,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
             return
 
         if self.should_count_visit():
-            increment_stat("visits")
+            self.track_human_visit()
 
         super().do_GET()
 
@@ -796,6 +820,20 @@ class SiteHandler(SimpleHTTPRequestHandler):
             "/product.html",
             "/shop.html",
         }
+
+    def track_human_visit(self):
+        increment_stat("visits")
+
+        if is_probably_bot(self.headers.get("User-Agent", "")):
+            return
+
+        cookie = SimpleCookie(self.headers.get("Cookie", ""))
+        if cookie.get(VISITOR_COOKIE_NAME):
+            return
+
+        visitor_id = secrets.token_urlsafe(18)
+        self.extra_headers.append(("Set-Cookie", build_visitor_cookie(visitor_id)))
+        increment_stat("uniqueVisitors")
 
     def read_json(self):
         length = int(self.headers.get("Content-Length", "0"))
