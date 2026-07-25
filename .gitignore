@@ -1,6 +1,7 @@
 # Local secrets
 .env
 users.db
+site-stats.json
 *.sqlite
 *.sqlite3
 

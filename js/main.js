@@ -407,11 +407,44 @@ document.addEventListener("DOMContentLoaded", () => {
     drawer.querySelectorAll('input[name="fulfillment"]').forEach((input) => {
       input.addEventListener("change", () => updateAddressVisibility(drawer));
     });
-    drawer.querySelector("#checkout-form").addEventListener("submit", (event) => {
+    drawer.querySelector("#checkout-form").addEventListener("submit", async (event) => {
       event.preventDefault();
+      const form = event.currentTarget;
       const message = drawer.querySelector("[data-checkout-message]");
-      message.textContent = "Order request saved for now. Real sending/payment will be connected later.";
-      message.classList.add("success");
+      const cart = loadCart();
+
+      if (!cart.length) {
+        message.textContent = "Add at least one item before submitting.";
+        message.className = "checkout-message";
+        return;
+      }
+
+      message.textContent = "Saving order request...";
+      message.className = "checkout-message";
+
+      try {
+        const data = await apiJson("/api/order-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: form.elements["customer-name"]?.value || "",
+            customerEmail: form.elements["customer-email"]?.value || "",
+            fulfillment: form.elements.fulfillment?.value || "pickup",
+            address: form.elements.address?.value || "",
+            paymentPlan: form.elements["payment-plan"]?.value || "later",
+            notes: form.elements.notes?.value || "",
+            items: cart,
+          }),
+        });
+
+        saveCart([]);
+        updateCartUI();
+        updateSiteStats(data.stats);
+        message.textContent = data.message || "Order request saved. Real payment will be connected later.";
+        message.classList.add("success");
+      } catch (error) {
+        message.textContent = error.message || "Could not save the order request yet.";
+      }
     });
     return drawer;
   }
@@ -573,6 +606,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return data;
   }
+
+  function updateSiteStats(stats) {
+    if (!stats) return;
+
+    document.querySelectorAll("[data-site-stat]").forEach((node) => {
+      const key = node.dataset.siteStat;
+      const value = Number(stats[key] || 0);
+      node.textContent = value.toLocaleString();
+    });
+  }
+
+  async function loadSiteStats() {
+    if (!document.querySelector("[data-site-stat]")) return;
+
+    try {
+      updateSiteStats(await apiJson("/api/stats"));
+    } catch {
+      // Stats are nice-to-have; the rest of the page should still work.
+    }
+  }
+
+  loadSiteStats();
 
   function updateAuthLinks() {
     authLinks.forEach((link) => {

@@ -173,6 +173,51 @@ img { max-width: 100%; display: block; }
 }
 .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
 
+.stats-section {
+  padding: 34px 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 20px;
+  border: 1px solid var(--crease);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255,178,46,0.18), rgba(21,183,164,0.12)),
+    #fff;
+  box-shadow: var(--shadow);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7px;
+  background: var(--coral);
+}
+
+.stat-card span {
+  display: block;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+  color: var(--ink);
+}
+
 .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
 .door {
   position: relative;
@@ -1612,6 +1657,7 @@ body.shop-page {
   .bird-stage { order: -1; }
   .bird { max-width: 220px; }
   .doors { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
   .about-grid { grid-template-columns: 1fr; }
   .coach-panel { position: static; }
   .math-message { width: 100%; }

@@ -8,6 +8,7 @@ import re
 import secrets
 import smtplib
 import sqlite3
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -52,10 +53,19 @@ SMTP_TIMEOUT_SECONDS = 20
 USERS_DB_PATH = Path(os.environ.get("USERS_DB_PATH", "users.db"))
 if not USERS_DB_PATH.is_absolute():
     USERS_DB_PATH = ROOT / USERS_DB_PATH
+STATS_PATH = Path(os.environ.get("STATS_PATH", "site-stats.json"))
+if not STATS_PATH.is_absolute():
+    STATS_PATH = ROOT / STATS_PATH
 request_times = deque()
 email_verification_codes = {}
 password_reset_codes = {}
 last_request_time = 0.0
+stats_lock = threading.Lock()
+DEFAULT_STATS = {
+    "visits": 0,
+    "productsSold": 0,
+    "quadraticMessages": 0,
+}
 
 
 def build_tutor_input(payload):
@@ -90,6 +100,47 @@ def build_tutor_input(payload):
             "Give a complete answer, including each requested quantity.",
         ]
     )
+
+
+def read_stats():
+    if not STATS_PATH.exists():
+        return DEFAULT_STATS.copy()
+
+    try:
+        data = json.loads(STATS_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        return DEFAULT_STATS.copy()
+
+    stats = DEFAULT_STATS.copy()
+    for key in stats:
+        try:
+            stats[key] = max(0, int(data.get(key, stats[key])))
+        except (TypeError, ValueError):
+            stats[key] = DEFAULT_STATS[key]
+    return stats
+
+
+def write_stats(stats):
+    STATS_PATH.write_text(json.dumps(stats, indent=2, sort_keys=True))
+
+
+def increment_stat(key, amount=1):
+    if key not in DEFAULT_STATS:
+        return DEFAULT_STATS.copy()
+
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        amount = 1
+
+    if amount <= 0:
+        amount = 1
+
+    with stats_lock:
+        stats = read_stats()
+        stats[key] = stats.get(key, 0) + amount
+        write_stats(stats)
+        return stats
 
 
 def encode_base64url(data):
@@ -657,6 +708,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
+        if self.request_path == "/api/stats":
+            self.send_json(read_stats())
+            return
+
         if self.request_path == "/api/auth-config":
             self.send_json(
                 {
@@ -673,6 +728,9 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
             self.send_json({"authenticated": False, "username": None})
             return
+
+        if self.should_count_visit():
+            increment_stat("visits")
 
         super().do_GET()
 
@@ -701,6 +759,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
             self.handle_reset_password()
             return
 
+        if self.request_path == "/api/order-request":
+            self.handle_order_request()
+            return
+
         if self.request_path == "/api/logout":
             self.send_json(
                 {
@@ -720,6 +782,20 @@ class SiteHandler(SimpleHTTPRequestHandler):
     @property
     def request_path(self):
         return self.path.split("?", 1)[0]
+
+    def should_count_visit(self):
+        path = self.request_path
+        if path in ("/", "/index.html"):
+            return True
+
+        return path in {
+            "/about.html",
+            "/gallery.html",
+            "/login.html",
+            "/math.html",
+            "/product.html",
+            "/shop.html",
+        }
 
     def read_json(self):
         length = int(self.headers.get("Content-Length", "0"))
@@ -971,6 +1047,41 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
         self.send_json({"ok": True, "message": "Password updated. You can log in now."})
 
+    def handle_order_request(self):
+        try:
+            payload = self.read_json()
+        except json.JSONDecodeError:
+            self.send_json({"error": "Invalid JSON"}, 400)
+            return
+
+        items = payload.get("items") or []
+        if not isinstance(items, list) or not items:
+            self.send_json({"error": "Add at least one item to the cart first."}, 400)
+            return
+
+        total_quantity = 0
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            try:
+                quantity = int(item.get("quantity", 1))
+            except (TypeError, ValueError):
+                quantity = 1
+            total_quantity += max(1, quantity)
+
+        if total_quantity <= 0:
+            self.send_json({"error": "Add at least one item to the cart first."}, 400)
+            return
+
+        stats = increment_stat("productsSold", total_quantity)
+        self.send_json(
+            {
+                "ok": True,
+                "message": "Order request saved. Your cart stats updated.",
+                "stats": stats,
+            }
+        )
+
     def handle_quadratic(self):
         global last_request_time
 
@@ -1081,7 +1192,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
             self.send_json({"error": str(error)}, 500)
             return
 
-        self.send_json({"answer": extract_gemini_text(data), "raw": data})
+        stats = increment_stat("quadraticMessages")
+        self.send_json({"answer": extract_gemini_text(data), "raw": data, "stats": stats})
 
     def send_json(self, payload, status=200, headers=None):
         body = json.dumps(payload).encode("utf-8")
