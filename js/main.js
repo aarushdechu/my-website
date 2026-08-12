@@ -1399,4 +1399,35 @@ document.addEventListener("DOMContentLoaded", () => {
       window.setTimeout(() => setQuadraticStatus("Ready"), 1200);
     });
   }
+
+  function decorateGlitchButtons(root = document) {
+    const selector = ".btn, .ask, .memory-button, .cart-fab";
+    const buttons = [];
+
+    if (root instanceof Element && root.matches(selector)) buttons.push(root);
+    root.querySelectorAll?.(selector).forEach(button => buttons.push(button));
+
+    buttons.forEach((button) => {
+      const label = button.textContent.replace(/\s+/g, " ").trim();
+      if (!label) return;
+      button.classList.add("glitch-button");
+      button.dataset.glitch = label;
+    });
+  }
+
+  decorateGlitchButtons();
+
+  const glitchObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node instanceof Element) decorateGlitchButtons(node);
+      });
+
+      if (mutation.type === "characterData" && mutation.target.parentElement) {
+        decorateGlitchButtons(mutation.target.parentElement);
+      }
+    });
+  });
+
+  glitchObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
 });

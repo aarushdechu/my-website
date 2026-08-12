@@ -2514,3 +2514,150 @@ body.shop-page {
 @media (prefers-reduced-motion: reduce) {
   .maker-ticker div { animation: none; }
 }
+
+/* Glitched action buttons, adapted from the interaction on A Sketchy Business. */
+.glitch-button {
+  position: relative;
+  isolation: isolate;
+}
+
+.glitch-button::after {
+  --glitch-slice-0: inset(50% 50% 50% 50%);
+  --glitch-slice-1: inset(80% -7px 0 0);
+  --glitch-slice-2: inset(50% -7px 28% 0);
+  --glitch-slice-3: inset(10% -7px 82% 0);
+  --glitch-slice-4: inset(38% -7px 42% 0);
+  --glitch-slice-5: inset(78% -7px 5% 0);
+  content: attr(data-glitch);
+  position: absolute;
+  z-index: 3;
+  inset: -1px;
+  display: grid;
+  place-items: center;
+  padding: inherit;
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  background: linear-gradient(45deg, transparent 4%, var(--paper) 4% 6%, var(--coral) 6%);
+  color: white;
+  font: inherit;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: -3px -3px 0 var(--ink), 3px 3px 0 #ffc3a7;
+  clip-path: var(--glitch-slice-0);
+  pointer-events: none;
+}
+
+.glitch-button:hover::after,
+.glitch-button:focus-visible::after {
+  animation: aarush-glitch 0.85s steps(2, end);
+}
+
+@keyframes aarush-glitch {
+  0% { clip-path: var(--glitch-slice-1); transform: translate(-16px, -7px); }
+  12% { clip-path: var(--glitch-slice-3); transform: translate(9px, 8px); }
+  24% { clip-path: var(--glitch-slice-1); transform: translate(-8px, 7px); }
+  36% { clip-path: var(--glitch-slice-3); transform: translate(0, 4px); }
+  48% { clip-path: var(--glitch-slice-2); transform: translate(-5px, 0); }
+  60% { clip-path: var(--glitch-slice-4); transform: translate(6px, 8px); }
+  72% { clip-path: var(--glitch-slice-2); transform: translate(-9px, 6px); }
+  84% { clip-path: var(--glitch-slice-5); transform: translate(16px, -7px); }
+  100% { clip-path: var(--glitch-slice-1); transform: translate(0); }
+}
+
+.origami-class-note {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(18px, 4vw, 42px);
+  align-items: center;
+  margin: 0 0 54px;
+  padding: 24px 28px;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 8px 9px 0 var(--coral);
+  transform: rotate(0.25deg);
+}
+
+.origami-class-note::before {
+  content: "";
+  position: absolute;
+  top: -13px;
+  left: 48%;
+  width: 92px;
+  height: 25px;
+  background: rgba(240, 196, 94, 0.78);
+  transform: rotate(-3deg);
+}
+
+.origami-class-note__price {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--coral);
+  font-size: 2rem;
+  font-weight: 900;
+  transform: rotate(-7deg);
+}
+
+.origami-class-note .eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--gold);
+}
+
+.origami-class-note h3 {
+  margin: 0 0 5px;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.origami-class-note p {
+  max-width: 620px;
+  margin: 0;
+  color: #ccc5b9;
+}
+
+.origami-class-note > strong {
+  max-width: 145px;
+  padding: 10px 12px;
+  border: 1px dashed var(--paper);
+  color: var(--paper);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .origami-class-note {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 22px 20px;
+  }
+
+  .origami-class-note > strong {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .origami-class-note {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .origami-class-note__price {
+    margin: 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-button:hover::after,
+  .glitch-button:focus-visible::after {
+    animation: none;
+  }
+}
