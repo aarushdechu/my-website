@@ -672,7 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <section class="auth-modal__card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
         <span class="eyebrow">Member bonus</span>
         <h2 id="auth-modal-title">Log in or sign up for more</h2>
-        <p>Make an account to unlock Quadratic and keep the website feeling more personal.</p>
+        <p>Make an account to save your profile and keep the website feeling more personal.</p>
         <div class="auth-modal__actions">
           <a class="btn btn--coral" href="login.html?mode=signup">Sign up</a>
           <a class="btn btn--ghost" href="login.html">Log in</a>
@@ -798,11 +798,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const copy = {
       login: {
         title: "Log in",
-        intro: "Log in to unlock Quadratic.",
+        intro: "Log in to access your account.",
       },
       signup: {
         title: "Sign up",
-        intro: "Create an account to unlock Quadratic.",
+        intro: "Create an account and set up your profile.",
       },
       reset: {
         title: "Reset password",
