@@ -11,12 +11,13 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="gallery-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-      <ul class="nav-links">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html">Shop</a></li>
         <li><a href="gallery.html" aria-current="page">Gallery</a></li>
@@ -26,7 +27,7 @@
     </div>
   </header>
 
-  <section class="section">
+  <main class="section" id="main-content">
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Case file 002 · My gallery</span>
@@ -61,7 +62,7 @@
         </article>
       </div>
     </div>
-  </section>
+  </main>
 
   <footer class="site-footer">
     <div class="wrap">

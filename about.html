@@ -11,12 +11,13 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="about-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-      <ul class="nav-links">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html">Shop</a></li>
         <li><a href="gallery.html">Gallery</a></li>
@@ -26,15 +27,15 @@
     </div>
   </header>
 
-  <section class="section">
+  <main class="section" id="main-content">
     <div class="wrap">
       <div class="about-grid">
         <div class="portrait" aria-label="A for Aarush"><span>A</span><small>Maker since day one</small></div>
 
         <div>
           <span class="eyebrow">About me</span>
-          <h2 style="font-size:clamp(1.9rem,4vw,2.8rem); margin:8px 0 14px">Hi, I'm Aarush!</h2>
-          <p style="color:var(--ink-soft); font-size:1.1rem">
+          <h1 class="about-title">Hi, I'm Aarush!</h1>
+          <p class="about-intro">
             I'm 12 and I love making things — folding paper into birds and dragons,
             painting, and writing little programs. When I'm not making stuff, you'll
             find me on a court playing basketball, badminton, or tennis, or at the piano
@@ -48,14 +49,14 @@
             <li><b>Dream project:</b> a video game I designed and coded myself</li>
           </ul>
 
-          <div class="hero-actions" style="margin-top:24px">
+          <div class="hero-actions about-actions">
             <a class="btn btn--coral" href="shop.html">See what I'm selling</a>
             <a class="btn btn--ghost" href="gallery.html">Look at my work</a>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </main>
 
   <footer class="site-footer">
     <div class="wrap">

@@ -155,9 +155,9 @@ function shopItemCard(item, nested = false) {
     </article>`;
 }
 
-function shopFolderButton(folder, itemCount) {
+function shopFolderButton(folder, itemCount, panelId) {
   return `
-    <button class="shop-folder-toggle" type="button" aria-expanded="false">
+    <button class="shop-folder-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
       <span class="folder-art" aria-hidden="true">
         <span class="folder-back"></span>
         <span class="folder-paper folder-paper--one"></span>
@@ -173,25 +173,27 @@ function shopFolderButton(folder, itemCount) {
 }
 
 function shopFolderGroup(item) {
+  const panelId = `shop-folder-${slugifyProductName(item.name)}`;
   return `
     <section class="shop-folder-group is-collapsed">
-      ${shopFolderButton(item, item.children.length)}
-      <div class="shop-subitems" aria-label="${item.name} choices">
+      ${shopFolderButton(item, item.children.length, panelId)}
+      <div class="shop-subitems" id="${panelId}" aria-label="${item.name} choices">
         ${item.children.map(child => shopItemCard(child, true)).join("")}
       </div>
     </section>`;
 }
 
 function shopCategory(category) {
-  const itemCount = category.items.reduce((count, item) => count + 1 + (item.children ? item.children.length : 0), 0);
+  const itemCount = category.items.reduce((count, item) => count + (item.children ? item.children.length : 1), 0);
+  const panelId = `shop-category-${slugifyProductName(category.name)}`;
   const items = category.items.map((item) => {
     return item.children ? shopFolderGroup(item) : shopItemCard(item);
   }).join("");
 
   return `
     <section class="shop-category is-collapsed" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
-      ${shopFolderButton(category, itemCount)}
-      <div class="shop-category__items">
+      ${shopFolderButton(category, itemCount, panelId)}
+      <div class="shop-category__items" id="${panelId}">
         ${items}
       </div>
     </section>`;
@@ -251,9 +253,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.querySelector(".nav-toggle");
   const links = document.querySelector(".nav-links");
   if (toggle && links) {
+    const closeMenu = () => {
+      links.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open menu");
+    };
+
     toggle.addEventListener("click", () => {
       const open = links.classList.toggle("open");
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    });
+
+    links.addEventListener("click", (event) => {
+      if (event.target.closest("a")) closeMenu();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!links.classList.contains("open") || event.target.closest(".nav")) return;
+      closeMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMenu();
     });
   }
 
@@ -268,6 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const authPromptKey = "aarush-auth-prompt-seen";
   const authTokenKey = "aarush-auth-token";
   const cartStorageKey = "aarush-shop-cart";
+  const isShopExperience = document.body.classList.contains("shop-page");
   let authState = {
     authenticated: false,
     username: null,
@@ -486,6 +509,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateCartUI() {
     const total = loadCart().reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const existingButton = document.getElementById("cart-fab");
+    if (!isShopExperience && total === 0) {
+      existingButton?.remove();
+      return;
+    }
+
     const button = getCartButton();
     button.classList.toggle("has-items", total > 0);
     button.querySelector("[data-cart-count]").textContent = total;
@@ -539,6 +568,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     drawer.hidden = true;
   }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const drawer = document.getElementById("cart-drawer");
+    if (drawer && !drawer.hidden) showCartDrawer(false);
+  });
 
   document.addEventListener("click", (event) => {
     const addButton = event.target.closest("[data-add-cart]");
@@ -685,6 +720,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!event.target.closest("[data-auth-dismiss]")) return;
       if (modal.classList.contains("is-required")) return;
       modal.hidden = true;
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !modal.classList.contains("is-required")) {
+        modal.hidden = true;
+      }
     });
     return modal;
   }
@@ -1118,7 +1158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const authReady = refreshSession();
   authReady.then((session) => {
     if (!session.authenticated && !isQuadraticPage) {
-      showAuthPrompt(false);
+      window.setTimeout(() => showAuthPrompt(false), 2500);
     }
   });
 

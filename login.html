@@ -11,12 +11,13 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="auth-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-      <ul class="nav-links">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html">Shop</a></li>
         <li><a href="gallery.html">Gallery</a></li>
@@ -26,7 +27,7 @@
     </div>
   </header>
 
-  <main class="auth-shell">
+  <main class="auth-shell" id="main-content">
     <section class="auth-card" aria-labelledby="login-title">
       <span class="eyebrow">Member access</span>
       <h1 id="login-title">Log in</h1>

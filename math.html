@@ -11,12 +11,13 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="math-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-      <ul class="nav-links">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html">Shop</a></li>
         <li><a href="gallery.html">Gallery</a></li>
@@ -26,7 +27,7 @@
     </div>
   </header>
 
-  <section class="quadratic-hero">
+  <section class="quadratic-hero" id="main-content">
     <div class="wrap quadratic-hero-grid">
       <div>
         <span class="eyebrow">AI math coach</span>

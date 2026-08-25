@@ -11,12 +11,13 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="shop-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-      <ul class="nav-links">
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html" aria-current="page">Shop</a></li>
         <li><a href="gallery.html">Gallery</a></li>
@@ -26,7 +27,7 @@
     </div>
   </header>
 
-  <section class="section">
+  <main class="section" id="main-content">
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Case file 003 · The shop</span>
@@ -53,7 +54,7 @@
       <div class="shop-catalog" id="shop-grid"></div>
       <noscript><p>Turn on JavaScript to see the items, or ask Aarush directly!</p></noscript>
     </div>
-  </section>
+  </main>
 
   <footer class="site-footer">
     <div class="wrap">
