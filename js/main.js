@@ -158,6 +158,37 @@ function renderProductDetail() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const openingIntro = document.getElementById("opening-intro");
+  const introSkip = document.getElementById("intro-skip");
+  let introTimer;
+
+  function finishOpeningIntro(immediate = false) {
+    if (!openingIntro || openingIntro.classList.contains("is-finished")) return;
+
+    window.clearTimeout(introTimer);
+    try {
+      sessionStorage.setItem("aarush-intro-seen", "true");
+    } catch (error) {
+      // Finishing the animation does not depend on browser storage.
+    }
+
+    document.documentElement.classList.remove("show-opening-intro");
+    openingIntro.classList.add("is-finished");
+    if (immediate) openingIntro.hidden = true;
+    else window.setTimeout(() => { openingIntro.hidden = true; }, 500);
+  }
+
+  if (openingIntro) {
+    const introIsVisible = document.documentElement.classList.contains("show-opening-intro");
+    if (!introIsVisible) finishOpeningIntro(true);
+    else introTimer = window.setTimeout(finishOpeningIntro, 4400);
+
+    introSkip?.addEventListener("click", () => finishOpeningIntro());
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !openingIntro.hidden) finishOpeningIntro();
+    });
+  }
+
   // Mobile menu
   const toggle = document.querySelector(".nav-toggle");
   const links = document.querySelector(".nav-links");

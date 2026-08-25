@@ -9,8 +9,39 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Rock+Salt&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    try {
+      const introSeen = sessionStorage.getItem("aarush-intro-seen") === "true";
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const forceIntro = new URLSearchParams(location.search).has("intro");
+      if ((!introSeen || forceIntro) && !reduceMotion && !location.hash) {
+        document.documentElement.classList.add("show-opening-intro");
+      }
+    } catch (error) {
+      // The page remains usable if browser storage is unavailable.
+    }
+  </script>
 </head>
 <body class="home-page">
+  <section class="opening-intro" id="opening-intro" aria-label="Aarush Dechu animated introduction">
+    <div class="intro-grid" aria-hidden="true"></div>
+    <div class="intro-static" aria-hidden="true"></div>
+    <p class="intro-boot">[ booting aarush.dev ]</p>
+
+    <div class="intro-hit intro-hit--paper" data-text="PAPER" aria-hidden="true">PAPER</div>
+    <div class="intro-hit intro-hit--pixels" data-text="PIXELS" aria-hidden="true">PIXELS</div>
+    <div class="intro-hit intro-hit--play" data-text="PLAY" aria-hidden="true">PLAY</div>
+
+    <div class="intro-lockup">
+      <span>maker // artist // coder</span>
+      <h1 data-text="AARUSH.DEV">AARUSH.DEV</h1>
+      <p>Paper, pixels &amp; play.</p>
+    </div>
+
+    <div class="intro-progress" aria-hidden="true"><span></span></div>
+    <button class="intro-skip" id="intro-skip" type="button">Skip intro</button>
+  </section>
+
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
