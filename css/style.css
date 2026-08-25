@@ -2922,6 +2922,229 @@ body.shop-page {
   }
 }
 
+/* Dark terminal palette. Product photos keep a light table for clarity. */
+:root {
+  color-scheme: dark;
+  --paper: #090b0d;
+  --paper-2: #101318;
+  --surface: #171b20;
+  --ink: #f5f1e8;
+  --ink-soft: #bcc4ce;
+  --coral: #ff7040;
+  --gold: #ffd166;
+  --teal: #59d6c2;
+  --violet: #a99cff;
+  --crease: rgba(245, 241, 232, 0.22);
+  --code-green: #55e6b4;
+  --code-cyan: #54d8ff;
+  --shadow: 6px 7px 0 rgba(84, 216, 255, 0.2);
+}
+
+body {
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(84, 216, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(84, 216, 255, 0.055) 1px, transparent 1px);
+}
+
+body::before {
+  opacity: 0.08;
+  mix-blend-mode: screen;
+}
+
+.site-header,
+.nav-links,
+.profile-menu__panel {
+  background: rgba(9, 11, 13, 0.94);
+  color: var(--ink);
+}
+
+.site-header {
+  border-bottom-color: var(--code-cyan);
+}
+
+.nav-links a,
+.brand,
+.section-head p,
+.hero p.lead,
+.about-intro,
+.product-lead,
+.card .desc,
+.folder-copy small,
+.product-back,
+.cart-preview-note {
+  color: var(--ink-soft);
+}
+
+.brand,
+.nav-links a:hover,
+.nav-links a[aria-current="page"] {
+  color: var(--ink);
+}
+
+.hero,
+.section,
+.stats-section,
+.auth-shell,
+.product-page main {
+  background-color: transparent;
+}
+
+.card,
+.door,
+.stat-card,
+.facts li,
+.auth-card,
+.auth-modal__card,
+.product-info-panel,
+.product-empty,
+.checkout-form,
+.cart-line,
+.profile-menu__panel {
+  border-color: var(--crease);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.card .body,
+.door,
+.facts li,
+.product-info-panel {
+  background-color: var(--surface);
+}
+
+.chip,
+.coach-badges span,
+.auth-tabs,
+.auth-tab.is-active {
+  border-color: var(--crease);
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.stat-card {
+  border-color: rgba(245, 241, 232, 0.38);
+}
+
+.stat-card span,
+.stat-card strong {
+  color: var(--ink);
+}
+
+.shop-category__items,
+.shop-subitems,
+.shop-category--origami > .shop-category__items {
+  border-color: var(--crease);
+  background-color: #11151a;
+  color: var(--ink);
+}
+
+.shop-category--origami > .shop-category__items {
+  background-image:
+    linear-gradient(145deg, transparent 49.65%, rgba(255, 209, 102, 0.16) 49.85%, transparent 50.15%),
+    linear-gradient(35deg, transparent 49.7%, rgba(84, 216, 255, 0.11) 49.9%, transparent 50.2%);
+}
+
+.shop-category--origami .shop-subitems {
+  border-color: rgba(255, 209, 102, 0.55);
+  background:
+    linear-gradient(135deg, transparent 49.7%, rgba(255, 209, 102, 0.1) 50%, transparent 50.3%),
+    rgba(17, 21, 26, 0.94);
+  background-size: 170px 170px;
+}
+
+.shop-photo-frame,
+.product-photo-panel,
+.product-category--origami .product-photo-panel {
+  background-color: #f3f4f5;
+  background-image:
+    linear-gradient(35deg, transparent 49.7%, rgba(20, 24, 30, 0.08) 50%, transparent 50.3%);
+}
+
+.shop-letter {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.product-category--origami .product-detail-card {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(145deg, transparent 49.7%, rgba(255, 209, 102, 0.1) 50%, transparent 50.3%);
+}
+
+.shop-note,
+.note,
+.buy-box {
+  border-color: var(--gold);
+  background: #ffe48f;
+  color: #17130a;
+}
+
+.shop-note b,
+.note b,
+.buy-box h2,
+.buy-box p {
+  color: #17130a;
+}
+
+.product-facts li {
+  border-color: var(--crease);
+  background: var(--paper-2);
+}
+
+.site-footer,
+.maker-ticker,
+.stats-section {
+  background: #050607;
+  color: var(--ink);
+}
+
+.auth-field input,
+.auth-field textarea,
+.checkout-form input:not([type="radio"]),
+.checkout-form textarea {
+  border-color: var(--crease);
+  background: #0e1115;
+  color: var(--ink);
+}
+
+.auth-field input::placeholder,
+.auth-field textarea::placeholder,
+.checkout-form input::placeholder,
+.checkout-form textarea::placeholder {
+  color: #8d96a1;
+}
+
+.auth-modal__backdrop,
+.cart-drawer__backdrop {
+  background: rgba(0, 0, 0, 0.76);
+}
+
+.cart-drawer__panel {
+  border-color: var(--code-cyan);
+  background: #0d1014;
+  color: var(--ink);
+}
+
+.checkout-options label {
+  border-color: var(--crease);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.checkout-options label:has(input:checked) {
+  border-color: var(--teal);
+  background: rgba(89, 214, 194, 0.16);
+}
+
+@media (max-width: 820px) {
+  .nav-links {
+    border-color: var(--code-cyan);
+    background: #0c0f13;
+  }
+}
+
 @media (max-width: 460px) {
   .origami-class-note {
     grid-template-columns: 1fr;
