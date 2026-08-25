@@ -97,7 +97,7 @@ function shopCategory(category) {
   }).join("");
 
   return `
-    <section class="shop-category is-collapsed" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
+    <section class="shop-category shop-category--${slugifyProductName(category.name)} is-collapsed" style="--folder-accent:${category.accent || "#efbd52"}; --folder-deep:${category.deep || "#d9962d"}">
       ${shopFolderButton(category, itemCount, panelId)}
       <div class="shop-category__items" id="${panelId}">
         ${items}
@@ -125,6 +125,8 @@ function renderProductDetail() {
   }
 
   const path = [product.category, product.group].filter(Boolean).join(" / ");
+  const price = product.price || "Price coming soon";
+  document.body.classList.add(`product-category--${slugifyProductName(product.category)}`);
 
   detail.innerHTML = `
     <article class="product-detail-card">
@@ -138,8 +140,9 @@ function renderProductDetail() {
         <p class="product-lead">${product.desc}</p>
 
         <div class="buy-box">
+          <span class="product-price">${price}</span>
           <h2>Buying Info</h2>
-          <p>Price, pickup or delivery details, timing, and customization options will be added here later.</p>
+          <p>Add this item to your cart to send an order request. Pickup, delivery, timing, and any custom colors are confirmed before payment.</p>
         </div>
 
         <button class="btn btn--coral add-cart-preview" type="button" data-add-cart="${product.slug}">Add to cart</button>
