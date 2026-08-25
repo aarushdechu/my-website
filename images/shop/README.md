@@ -1,19 +1,14 @@
-Shop product photos currently used by the catalog:
+# Shop Images
 
-- eagle-mywebsite-shop.png
-- dragonv1-mywebsite-shop.png
-- dragonv2-mywebsite-shop.png
-- dragonv3-mywebsite-shop.png
-- parrot-mywebsite-shop.png
-- flowerdaisy-mywebsite-shop.png
-- flowersunflower-mywebsite-shop.png
-- flowerrose-mywebsite-shop.png
-- flowerlily-mywebsite-shop.png
-- dinovelociraptor-mywebsite-shop.png
-- dinotrex-mywebsite-shop.png
-- dinobrachiosaurus-mywebsite-shop.png
-- mouse-mywebsite-shop.png
-- pheonix-mywebsite-shop.png
-- alphabet-mywebsite-shop.png
+Use lowercase kebab-case names beginning with `origami-`, for example:
 
-The shop page shows clean letter tiles if any photo is missing.
+```text
+origami-eagle.png
+origami-dragon-v1.png
+origami-sunflower.png
+```
+
+Connect a photo to a product in `js/shop-catalog.js`. The kangaroo and turtle
+photos are saved here for future catalog entries but are not listed yet.
+
+The shop shows a letter tile when a catalog image is missing.

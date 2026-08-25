@@ -1,7 +1,15 @@
 /* =====================================================================
-   Aarush's website — shared styles
-   Theme: "folded paper / origami". Edit the colors in :root to recolor
-   the whole site at once.
+   AARUSH'S WEBSITE - SHARED STYLES
+
+   QUICK MAP
+   1. Foundation and original components
+   2. Shop, cart, authentication, and Quadratic components
+   3. Case-file visual theme (search: "case-file edition")
+   4. Glitch buttons and origami class banner
+   5. Desktop and responsive polish
+
+   Keep new overrides near the related component whenever possible. Run
+   `python3 tools/check_project.py` after changing paths or CSS structure.
    ===================================================================== */
 
 :root {

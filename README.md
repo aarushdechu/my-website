@@ -1,55 +1,33 @@
-# my-website
-A website.... for ME!
+# Aarush's Website
 
-## Local setup
+A personal website with a portfolio, handmade shop, accounts, order requests, and
+a Python backend.
 
-Run the Python server from this folder:
+## Start Locally
 
 ```bash
 python3 server.py
 ```
 
-Create a local `.env` file for private values. Do not commit `.env`.
+Then open `http://localhost:8001`.
+
+Private settings belong in `.env`. Start from `.env.example`; never commit `.env`.
+
+## Common Edits
+
+- Shop products: `js/shop-catalog.js`
+- Shared behavior: `js/main.js`
+- Site styling: `css/style.css`
+- Page content: the HTML files in the project root
+- Backend and APIs: `server.py`
+- Product photos: `images/shop/`
+
+## Check The Project
 
 ```bash
-GEMINI_API_KEY=your-gemini-key
-GEMINI_MODEL=gemini-2.5-flash
-
-LOGIN_USERNAME=aarush
-LOGIN_PASSWORD=your-login-password
-SESSION_SECRET=make-this-long-and-random
-COOKIE_SECURE=false
-USERS_DB_PATH=users.db
-RESET_CODE_SECONDS=600
-GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-EMAIL_PROVIDER=auto
-RESEND_API_KEY=
-RESEND_FROM=Aarush Lab <noreply@your-verified-domain.com>
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-sending-email@gmail.com
-SMTP_PASSWORD=your-gmail-app-password
-SMTP_FROM=your-sending-email@gmail.com
-SMTP_SECURITY=starttls
-SMTP_USE_TLS=true
+python3 tools/check_project.py
 ```
 
-On Render, add the same environment variables, but use `COOKIE_SECURE=true`.
-
-For Google sign-in, create a Google OAuth web client, add your Render domain as an
-authorized JavaScript origin, then set `GOOGLE_CLIENT_ID` in Render.
-
-For email verification and password reset codes on Render, use an HTTPS email
-provider if SMTP is unreachable. Resend works with `EMAIL_PROVIDER=resend`,
-`RESEND_API_KEY`, and `RESEND_FROM`. The `RESEND_FROM` address must belong to a
-domain verified in Resend. For a first test, Resend's
-`Aarush Lab <onboarding@resend.dev>` sender can send to the email address that owns
-the Resend account; sending to other users requires your own verified domain. SMTP
-remains available as a fallback. With
-Gmail SMTP, use `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`,
-`SMTP_SECURITY=starttls`, and a Gmail app password, not your normal Google
-password.
-
-Sign-up accounts are stored in SQLite. For local development, `USERS_DB_PATH=users.db`
-is fine. On Render, use a persistent disk or hosted database if you want accounts to
-survive service restarts and redeploys.
+See [docs/PROJECT_MAP.md](docs/PROJECT_MAP.md) for the full directory guide and
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Render, Google login, email, and data
+storage setup.
