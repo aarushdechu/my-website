@@ -18,6 +18,8 @@ from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import requests
+
 
 ROOT = Path(__file__).resolve().parent
 
@@ -391,27 +393,42 @@ def send_email_with_resend(to_email, subject, body):
         "subject": subject,
         "text": body,
     }
-    request = urllib.request.Request(
-        "https://api.resend.com/emails",
-        data=json.dumps(request_body).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-
     try:
-        with urllib.request.urlopen(request, timeout=SMTP_TIMEOUT_SECONDS) as response:
-            response.read()
-    except urllib.error.HTTPError as error:
-        message = error.read().decode("utf-8", "replace")
-        if error.code in (400, 422):
-            raise ValueError(f"That email could not be sent. Resend said: {message}") from error
-        raise RuntimeError(f"Resend email failed with HTTP {error.code}: {message}") from error
-    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        response = requests.post(
+            "https://api.resend.com/emails",
+            json=request_body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Accept": "application/json",
+                "User-Agent": "AarushLab/1.0 (+https://aarush-dechu-website.onrender.com)",
+            },
+            timeout=SMTP_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as error:
         detail = f"{error.__class__.__name__}: {error}"
         raise RuntimeError(f"Could not reach the Resend email API over HTTPS. Details: {detail}") from error
+
+    if response.ok:
+        return
+
+    try:
+        provider_error = response.json()
+        message = provider_error.get("message") or provider_error.get("error") or response.text
+    except (ValueError, AttributeError):
+        message = response.text
+
+    message = str(message).strip() or "No error details were returned."
+    if response.status_code in (400, 404, 422):
+        raise ValueError(f"That email could not be sent. Resend said: {message}")
+    if response.status_code in (401, 403):
+        raise RuntimeError(
+            "Resend rejected the email service credentials or sender address. "
+            "Check RESEND_API_KEY and make sure RESEND_FROM uses a verified Resend domain. "
+            f"Details: {message}"
+        )
+    if response.status_code == 429:
+        raise RuntimeError("Too many verification emails were requested. Wait a minute and try again.")
+    raise RuntimeError(f"Resend email failed with HTTP {response.status_code}: {message}")
 
 
 def send_email_with_smtp(to_email, subject, body):
@@ -467,8 +484,12 @@ def send_email(to_email, subject, body):
     provider = get_email_provider()
 
     if provider == "resend" or (provider == "auto" and resend_is_configured()):
-        send_email_with_resend(to_email, subject, body)
-        return
+        try:
+            send_email_with_resend(to_email, subject, body)
+            return
+        except RuntimeError:
+            if provider != "auto" or not smtp_is_configured():
+                raise
 
     send_email_with_smtp(to_email, subject, body)
 

@@ -24,7 +24,7 @@ RESET_CODE_SECONDS=600
 GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
 EMAIL_PROVIDER=auto
 RESEND_API_KEY=
-RESEND_FROM=
+RESEND_FROM=Aarush Lab <noreply@your-verified-domain.com>
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your-sending-email@gmail.com
@@ -41,7 +41,11 @@ authorized JavaScript origin, then set `GOOGLE_CLIENT_ID` in Render.
 
 For email verification and password reset codes on Render, use an HTTPS email
 provider if SMTP is unreachable. Resend works with `EMAIL_PROVIDER=resend`,
-`RESEND_API_KEY`, and `RESEND_FROM`. SMTP remains available as a fallback. With
+`RESEND_API_KEY`, and `RESEND_FROM`. The `RESEND_FROM` address must belong to a
+domain verified in Resend. For a first test, Resend's
+`Aarush Lab <onboarding@resend.dev>` sender can send to the email address that owns
+the Resend account; sending to other users requires your own verified domain. SMTP
+remains available as a fallback. With
 Gmail SMTP, use `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`,
 `SMTP_SECURITY=starttls`, and a Gmail app password, not your normal Google
 password.
