@@ -31,7 +31,7 @@
 - verification and reset emails
 - order requests
 - Gemini requests
-- visitor and sales statistics
+- signed-in visitor and sales statistics
 
 `requirements.txt` lists the Python packages Render installs.
 

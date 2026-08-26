@@ -47,9 +47,7 @@ COOLDOWN_SECONDS = float(os.environ.get("QUADRATIC_COOLDOWN_SECONDS", "1"))
 MAX_HISTORY_MESSAGES = int(os.environ.get("QUADRATIC_HISTORY_MESSAGES", "6"))
 MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "900"))
 SESSION_COOKIE_NAME = "aarush_session"
-VISITOR_COOKIE_NAME = "aarush_visitor"
 SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", str(7 * 24 * 60 * 60)))
-VISITOR_SECONDS = int(os.environ.get("VISITOR_SECONDS", str(180 * 24 * 60 * 60)))
 PASSWORD_ITERATIONS = 210_000
 RESET_CODE_SECONDS = int(os.environ.get("RESET_CODE_SECONDS", "600"))
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -112,13 +110,12 @@ def build_tutor_input(payload):
 
 
 def read_stats():
-    if not STATS_PATH.exists():
-        return DEFAULT_STATS.copy()
-
-    try:
-        data = json.loads(STATS_PATH.read_text())
-    except (OSError, json.JSONDecodeError):
-        return DEFAULT_STATS.copy()
+    data = {}
+    if STATS_PATH.exists():
+        try:
+            data = json.loads(STATS_PATH.read_text())
+        except (OSError, json.JSONDecodeError):
+            data = {}
 
     stats = DEFAULT_STATS.copy()
     for key in stats:
@@ -126,6 +123,10 @@ def read_stats():
             stats[key] = max(0, int(data.get(key, stats[key])))
         except (TypeError, ValueError):
             stats[key] = DEFAULT_STATS[key]
+
+    # A cookie identifies a browser, not a person. Count registered accounts
+    # so the public number represents signed-in individuals instead.
+    stats["uniqueVisitors"] = count_registered_users()
     return stats
 
 
@@ -209,10 +210,6 @@ def verify_session_token(token):
 
 def build_session_cookie(value, max_age=SESSION_SECONDS):
     return build_cookie(SESSION_COOKIE_NAME, value, max_age, http_only=True)
-
-
-def build_visitor_cookie(value, max_age=VISITOR_SECONDS):
-    return build_cookie(VISITOR_COOKIE_NAME, value, max_age, http_only=True)
 
 
 def build_cookie(name, value, max_age, http_only=False):
@@ -534,6 +531,26 @@ def get_user(username):
         ).fetchone()
 
 
+def count_registered_users():
+    configured_username = normalize_username(os.environ.get("LOGIN_USERNAME", ""))
+    configured_password = os.environ.get("LOGIN_PASSWORD", "")
+
+    if not USERS_DB_PATH.exists():
+        return 1 if configured_username and configured_password else 0
+
+    with sqlite3.connect(USERS_DB_PATH) as connection:
+        total = int(connection.execute("SELECT COUNT(*) FROM users").fetchone()[0])
+        if configured_username and configured_password:
+            stored = connection.execute(
+                "SELECT 1 FROM users WHERE username = ?",
+                (configured_username,),
+            ).fetchone()
+            if not stored:
+                total += 1
+
+    return total
+
+
 def get_user_by_google_sub(google_sub):
     if not google_sub:
         return None
@@ -843,18 +860,10 @@ class SiteHandler(SimpleHTTPRequestHandler):
         }
 
     def track_human_visit(self):
-        increment_stat("visits")
-
         if is_probably_bot(self.headers.get("User-Agent", "")):
             return
 
-        cookie = SimpleCookie(self.headers.get("Cookie", ""))
-        if cookie.get(VISITOR_COOKIE_NAME):
-            return
-
-        visitor_id = secrets.token_urlsafe(18)
-        self.extra_headers.append(("Set-Cookie", build_visitor_cookie(visitor_id)))
-        increment_stat("uniqueVisitors")
+        increment_stat("visits")
 
     def read_json(self):
         length = int(self.headers.get("Content-Length", "0"))

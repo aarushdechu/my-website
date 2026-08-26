@@ -16,6 +16,7 @@
   --paper:    #FAF7F1;
   --surface:  #FFFFFF;
   --ink:      #1B2240;
+  --ink-contrast: #1B2240;
   --ink-soft: #5A6080;
   --coral:    #FF5A5A;
   --gold:     #FFB22E;
@@ -199,7 +200,7 @@ img { max-width: 100%; display: block; }
   border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(255,178,46,0.18), rgba(21,183,164,0.12)),
-    #fff;
+    var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -224,6 +225,12 @@ img { max-width: 100%; display: block; }
   font-size: clamp(2rem, 5vw, 3.2rem);
   line-height: 1;
   color: var(--ink);
+}
+
+.stat-card small {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
 }
 
 .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
@@ -1854,6 +1861,53 @@ body::before {
   font-size: 1.15rem;
 }
 
+/* Defensive overrides: when a theme swaps `--ink`, some components
+   accidentally used it for backgrounds. Use `--ink-contrast` for
+   stable dark surfaces and keep text readable. */
+.btn,
+.card .ask,
+.profile-menu__button,
+.door--quadratic .tag,
+.price,
+.product-price,
+.profile-menu__button {
+  background: var(--ink-contrast) !important;
+  color: #fff !important;
+  border-color: var(--ink-contrast) !important;
+}
+
+/* Glitch title effect for occasional visual glitches */
+.glitch-title {
+  position: relative;
+  display: inline-block;
+}
+.glitch-title::before,
+.glitch-title::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+  opacity: 0;
+  pointer-events: none;
+}
+.glitch-title::before { color: rgba(255,80,80,0.85); transform: translate3d(-2px,0,0); }
+.glitch-title::after  { color: rgba(80,160,255,0.85); transform: translate3d(2px,0,0); }
+
+@keyframes glitch-anim {
+  0%, 92% { opacity: 0; transform: none; }
+  93% { opacity: 1; transform: translate3d(-2px,-1px,0); }
+  94% { opacity: 1; transform: translate3d(2px,1px,0); }
+  95% { opacity: 1; transform: translate3d(-1px,1px,0); }
+  96% { opacity: 0; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+.glitch-title::before,
+.glitch-title::after {
+  animation: glitch-anim 6s infinite;
+}
+
 .shop-category--origami:not(.is-collapsed) {
   grid-column: 1 / -1;
 }
@@ -3460,6 +3514,57 @@ body::before {
   .opening-intro {
     display: none !important;
   }
+}
+
+/* Dark-theme corrections for components that historically used --ink as fill. */
+.origami-class-note {
+  border-color: rgba(245, 241, 232, 0.72);
+  background: #11161b;
+  color: #f5f1e8;
+  box-shadow: 8px 9px 0 var(--coral);
+}
+
+.origami-class-note h3,
+.origami-class-note > strong {
+  color: #f5f1e8;
+}
+
+.origami-class-note p {
+  color: #c4cbd3;
+}
+
+.origami-class-note__price {
+  border-color: #f5f1e8;
+  color: #090b0d;
+}
+
+.cart-fab,
+.cart-fab.has-items {
+  border-color: var(--code-cyan);
+  background: #11161b;
+  color: #f5f1e8;
+  box-shadow: 6px 6px 0 var(--coral);
+}
+
+.cart-fab b {
+  background: var(--coral);
+  color: #090b0d;
+}
+
+.stat-card strong {
+  width: max-content;
+  background: transparent;
+  color: #f5f1e8;
+  box-shadow: none;
+}
+
+.stat-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-family: var(--code-font);
+  font-size: 0.68rem;
+  text-transform: uppercase;
 }
 
 @media (max-width: 460px) {
