@@ -170,24 +170,6 @@
     const button = event.target.closest("[data-particle-button]");
     if (button) prepareParticleButton(button);
   });
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest("a[data-particle-button]");
-    if (!button || reduceMotion || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    prepareParticleButton(button);
-    button.classList.add("is-launching");
-    window.setTimeout(() => button.classList.add("is-launched"), 380);
-    window.setTimeout(() => { window.location.href = button.href; }, 720);
-  });
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-particle-button]");
-    if (!button || reduceMotion) return;
-    prepareParticleButton(button);
-    button.classList.remove("is-launched");
-    button.classList.add("is-launching");
-    window.setTimeout(() => button.classList.add("is-launched"), 380);
-    window.setTimeout(() => button.classList.remove("is-launching", "is-launched"), 1100);
-  });
 
   const cycleCopy = document.querySelector("[data-cycle-copy]");
   if (cycleCopy) {

@@ -353,9 +353,21 @@ body::after {
 
 .particle-button__label,
 .particle-button__arrow,
+.particle-button__loader,
 .particle-button__tick {
   position: relative;
   z-index: 2;
+}
+
+.particle-button__loader {
+  width: 0;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: #05070a;
+  border-right-color: #05070a;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.4);
 }
 
 .particle-button__label {
@@ -408,6 +420,27 @@ body::after {
   animation: particle-orbit var(--particle-duration, 1.2s) var(--particle-delay, 0s) ease-out infinite;
 }
 
+.particle-button.is-loading {
+  cursor: wait;
+  opacity: 1;
+  box-shadow: 0 0 28px rgba(110, 231, 255, 0.28);
+}
+
+.particle-button.is-loading .particle-button__label {
+  transform: translateX(-5px);
+}
+
+.particle-button.is-loading .particle-button__loader {
+  width: 18px;
+  opacity: 1;
+  transform: scale(1);
+  animation: login-loader 620ms linear infinite;
+}
+
+.particle-button.is-loading .particle-button__particle {
+  animation: particle-orbit var(--particle-duration, 1.2s) var(--particle-delay, 0s) ease-out infinite;
+}
+
 .particle-button.is-launching {
   color: transparent;
   border-radius: 50%;
@@ -445,6 +478,10 @@ body::after {
 
 @keyframes particle-tick {
   to { transform: translate(-50%, -50%) scale(1) rotate(-90deg); }
+}
+
+@keyframes login-loader {
+  to { transform: rotate(360deg); }
 }
 
 .glitch-button::before,
@@ -1040,5 +1077,21 @@ body.is-hyperspace .card {
 
   .particle-button__particle {
     display: none;
+  }
+
+  .particle-button.is-loading .particle-button__loader {
+    animation: none;
+  }
+
+  .particle-button.is-launching {
+    width: 52px;
+    min-width: 52px;
+    animation: none;
+    transform: rotate(90deg);
+  }
+
+  .particle-button.is-launched .particle-button__tick {
+    animation: none;
+    transform: translate(-50%, -50%) scale(1) rotate(-90deg);
   }
 }

@@ -56,7 +56,11 @@
           <input id="login-password" name="password" type="password" autocomplete="current-password" required />
         </div>
 
-        <button class="btn btn--coral auth-submit" type="submit">Log in</button>
+        <button class="btn btn--coral auth-submit particle-button login-load-button" type="submit" data-particle-button>
+          <span class="particle-button__label">Log in</span>
+          <span class="particle-button__loader" aria-hidden="true"></span>
+          <span class="particle-button__tick" aria-hidden="true">✓</span>
+        </button>
         <button class="auth-text-button" type="button" data-auth-tab="reset">Forgot password?</button>
       </form>
 

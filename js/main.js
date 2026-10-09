@@ -145,11 +145,7 @@ function renderProductDetail() {
           <p>Add this item to your cart to send an order request. Pickup, delivery, timing, and any custom colors are confirmed before payment.</p>
         </div>
 
-        <button class="btn btn--coral add-cart-preview particle-button" type="button" data-add-cart="${product.slug}" data-particle-button>
-          <span class="particle-button__label">Add to cart</span>
-          <span class="particle-button__arrow" aria-hidden="true">+</span>
-          <span class="particle-button__tick" aria-hidden="true">✓</span>
-        </button>
+        <button class="btn btn--coral add-cart-preview" type="button" data-add-cart="${product.slug}">Add to cart</button>
         <p class="cart-preview-note">Checkout is an order request for now. Real online payment will be connected later.</p>
 
         <ul class="product-facts">
@@ -499,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
     playKaChing();
     getCartButton().classList.add("cart-pop");
     window.setTimeout(() => getCartButton().classList.remove("cart-pop"), 450);
-    window.setTimeout(() => showCartDrawer(true), 700);
+    showCartDrawer(true);
   }
 
   function showCartDrawer(open) {
@@ -870,9 +866,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const hasAnimatedSubmit = submitButton?.matches("[data-particle-button]");
+    let submissionSucceeded = false;
+
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = "Checking";
+      submitButton.setAttribute("aria-label", "Checking login");
+      if (hasAnimatedSubmit) {
+        submitButton.classList.remove("is-launching", "is-launched");
+        submitButton.classList.add("is-loading");
+      } else {
+        submitButton.textContent = "Checking";
+      }
     }
     setAuthMessage("Checking...", "");
 
@@ -895,16 +900,27 @@ document.addEventListener("DOMContentLoaded", () => {
         authState = data;
         updateAuthLinks();
       }
+      submissionSucceeded = true;
       setAuthMessage(successText, "success");
+      if (hasAnimatedSubmit) {
+        submitButton.classList.remove("is-loading");
+        submitButton.classList.add("is-launching");
+        window.setTimeout(() => submitButton.classList.add("is-launched"), 380);
+      }
       window.setTimeout(() => {
         window.location.href = data.authenticated ? "index.html" : "login.html";
-      }, 550);
+      }, hasAnimatedSubmit ? 850 : 550);
     } catch (error) {
       setAuthMessage(error.message, "error");
     } finally {
-      if (submitButton) {
+      if (submitButton && !submissionSucceeded) {
         submitButton.disabled = false;
-        submitButton.textContent = form.dataset.submitText || "Submit";
+        submitButton.removeAttribute("aria-label");
+        if (hasAnimatedSubmit) {
+          submitButton.classList.remove("is-loading", "is-launching", "is-launched");
+        } else {
+          submitButton.textContent = form.dataset.submitText || "Submit";
+        }
       }
     }
   }
