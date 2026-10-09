@@ -1,5 +1,21 @@
 (() => {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const video = document.createElement("video");
+  video.className = "space-video";
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.setAttribute("aria-hidden", "true");
+  video.src = "images/space-background.mp4";
+  if (!reduceMotion) {
+    video.autoplay = true;
+    video.addEventListener("canplay", () => video.classList.add("is-ready"), { once: true });
+    video.play().catch(() => {
+      // The canvas background remains visible when autoplay is unavailable.
+    });
+  }
+  document.body.prepend(video);
+
   const canvas = document.createElement("canvas");
   canvas.className = "space-canvas";
   canvas.setAttribute("aria-hidden", "true");
@@ -124,10 +140,54 @@
     }, 38);
   }
 
+  function prepareParticleButton(button) {
+    if (button.dataset.particlesReady === "true") return;
+    button.dataset.particlesReady = "true";
+    const colors = ["#6ee7ff", "#ff66aa", "#ffd36a", "#65e7cd"];
+    for (let index = 0; index < 26; index += 1) {
+      const particle = document.createElement("i");
+      particle.className = "particle-button__particle";
+      particle.setAttribute("aria-hidden", "true");
+      const angle = (Math.PI * 2 * index) / 26 + Math.random() * 0.35;
+      const distance = 42 + Math.random() * 58;
+      particle.style.setProperty("--particle-x", `${Math.cos(angle) * distance}px`);
+      particle.style.setProperty("--particle-y", `${Math.sin(angle) * distance}px`);
+      particle.style.setProperty("--particle-size", `${3 + Math.random() * 5}px`);
+      particle.style.setProperty("--particle-delay", `${Math.random() * 0.18}s`);
+      particle.style.setProperty("--particle-duration", `${0.9 + Math.random() * 0.65}s`);
+      particle.style.setProperty("--particle-color", colors[index % colors.length]);
+      button.append(particle);
+    }
+  }
+
   resizeCanvas();
   if (reduceMotion) draw(0);
   else window.requestAnimationFrame(draw);
   window.addEventListener("resize", resizeCanvas, { passive: true });
+
+  document.querySelectorAll("[data-particle-button]").forEach(prepareParticleButton);
+  document.addEventListener("pointerover", (event) => {
+    const button = event.target.closest("[data-particle-button]");
+    if (button) prepareParticleButton(button);
+  });
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("a[data-particle-button]");
+    if (!button || reduceMotion || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    prepareParticleButton(button);
+    button.classList.add("is-launching");
+    window.setTimeout(() => button.classList.add("is-launched"), 380);
+    window.setTimeout(() => { window.location.href = button.href; }, 720);
+  });
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-particle-button]");
+    if (!button || reduceMotion) return;
+    prepareParticleButton(button);
+    button.classList.remove("is-launched");
+    button.classList.add("is-launching");
+    window.setTimeout(() => button.classList.add("is-launched"), 380);
+    window.setTimeout(() => button.classList.remove("is-launching", "is-launched"), 1100);
+  });
 
   const cycleCopy = document.querySelector("[data-cycle-copy]");
   if (cycleCopy) {

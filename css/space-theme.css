@@ -45,10 +45,36 @@ body::before {
   mask-image: linear-gradient(to bottom, black, rgba(0, 0, 0, 0.3));
 }
 
-.space-canvas {
+body::after {
+  content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
+  pointer-events: none;
+  background: rgba(3, 5, 8, 0.55);
+}
+
+.space-video {
+  position: fixed;
+  inset: 0;
+  z-index: -4;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: saturate(0.7) contrast(1.14) brightness(0.72);
+  pointer-events: none;
+  transition: opacity 1.8s ease;
+}
+
+.space-video.is-ready {
+  opacity: 0.54;
+}
+
+.space-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -313,6 +339,112 @@ body::before {
 .memory-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 24px rgba(110, 231, 255, 0.2);
+}
+
+/* Adapted from the supplied particle button, rewritten as plain CSS. */
+.particle-button {
+  position: relative;
+  isolation: isolate;
+  min-width: 152px;
+  overflow: visible;
+  transition: color 220ms ease, background 220ms ease, border-color 220ms ease,
+    box-shadow 220ms ease, transform 220ms ease;
+}
+
+.particle-button__label,
+.particle-button__arrow,
+.particle-button__tick {
+  position: relative;
+  z-index: 2;
+}
+
+.particle-button__label {
+  transition: transform 260ms ease, opacity 180ms ease;
+}
+
+.particle-button__arrow {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: width 260ms ease, opacity 180ms ease, transform 260ms ease;
+}
+
+.particle-button__tick {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  color: #05070a;
+  font-size: 1.25rem;
+  transform: translate(-50%, -50%) scale(0) rotate(-45deg);
+}
+
+.particle-button:hover .particle-button__label {
+  transform: translateX(-4px);
+}
+
+.particle-button:hover .particle-button__arrow {
+  width: 18px;
+  opacity: 1;
+  transform: none;
+}
+
+.particle-button__particle {
+  --particle-color: var(--cyan);
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: var(--particle-size, 5px);
+  height: var(--particle-size, 5px);
+  border-radius: 50%;
+  background: var(--particle-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--particle-color), transparent 25%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.25);
+}
+
+.particle-button:hover .particle-button__particle {
+  animation: particle-orbit var(--particle-duration, 1.2s) var(--particle-delay, 0s) ease-out infinite;
+}
+
+.particle-button.is-launching {
+  color: transparent;
+  border-radius: 50%;
+  transform: rotate(90deg);
+  animation: launch-button 460ms cubic-bezier(0.39, 2.01, 0.27, 0.75) forwards;
+}
+
+.particle-button.is-launching .particle-button__label,
+.particle-button.is-launching .particle-button__arrow {
+  opacity: 0;
+}
+
+.particle-button.is-launching .particle-button__particle {
+  animation: particle-launch 620ms var(--particle-delay, 0s) ease-out forwards;
+}
+
+.particle-button.is-launched .particle-button__tick {
+  animation: particle-tick 260ms ease-out forwards;
+}
+
+@keyframes particle-orbit {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  25% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(1); }
+}
+
+@keyframes particle-launch {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(1.4); }
+}
+
+@keyframes launch-button {
+  to { width: 52px; min-width: 52px; }
+}
+
+@keyframes particle-tick {
+  to { transform: translate(-50%, -50%) scale(1) rotate(-90deg); }
 }
 
 .glitch-button::before,
@@ -890,6 +1022,10 @@ body.is-hyperspace .card {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .space-video {
+    display: none;
+  }
+
   .space-reveal {
     opacity: 1;
     transform: none;
@@ -900,5 +1036,9 @@ body.is-hyperspace .card {
   .signal-title.is-glitching::before,
   .signal-title.is-glitching::after {
     animation: none;
+  }
+
+  .particle-button__particle {
+    display: none;
   }
 }

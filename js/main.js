@@ -145,7 +145,11 @@ function renderProductDetail() {
           <p>Add this item to your cart to send an order request. Pickup, delivery, timing, and any custom colors are confirmed before payment.</p>
         </div>
 
-        <button class="btn btn--coral add-cart-preview" type="button" data-add-cart="${product.slug}">Add to cart</button>
+        <button class="btn btn--coral add-cart-preview particle-button" type="button" data-add-cart="${product.slug}" data-particle-button>
+          <span class="particle-button__label">Add to cart</span>
+          <span class="particle-button__arrow" aria-hidden="true">+</span>
+          <span class="particle-button__tick" aria-hidden="true">✓</span>
+        </button>
         <p class="cart-preview-note">Checkout is an order request for now. Real online payment will be connected later.</p>
 
         <ul class="product-facts">
@@ -495,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
     playKaChing();
     getCartButton().classList.add("cart-pop");
     window.setTimeout(() => getCartButton().classList.remove("cart-pop"), 450);
-    showCartDrawer(true);
+    window.setTimeout(() => showCartDrawer(true), 700);
   }
 
   function showCartDrawer(open) {

@@ -41,6 +41,7 @@
 
 - `images/about/`: About-page photography
 - `images/shop/`: Shop product photography
+- `images/space-background.mp4`: muted looping background used across the site
 - Shop filenames use `origami-item-name.png`.
 
 ## Local-Only Data
