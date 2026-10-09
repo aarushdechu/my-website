@@ -34,15 +34,18 @@
       <h1 id="login-title">Log in</h1>
       <p class="auth-intro" id="auth-intro">Log in to access your account.</p>
 
-      <div class="google-login-wrap">
-        <div id="google-signin"></div>
-        <p class="auth-hint" id="google-signin-hint">Google sign-in appears when GOOGLE_CLIENT_ID is set.</p>
-      </div>
-
       <div class="auth-tabs" role="tablist" aria-label="Choose account action">
         <button class="auth-tab is-active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Log in</button>
         <button class="auth-tab" type="button" data-auth-tab="signup" role="tab" aria-selected="false">Sign up</button>
         <button class="auth-tab" type="button" data-auth-tab="reset" role="tab" aria-selected="false">Forgot</button>
+      </div>
+
+      <div class="google-login-wrap" data-google-auth>
+        <div class="google-button-shell">
+          <div id="google-signin"></div>
+        </div>
+        <p class="auth-hint" id="google-signin-hint">Loading Google...</p>
+        <div class="auth-divider" aria-hidden="true"><span>or use email</span></div>
       </div>
 
       <form class="auth-form" id="login-form" data-auth-panel="login" data-submit-text="Log in">

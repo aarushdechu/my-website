@@ -771,6 +771,10 @@ document.addEventListener("DOMContentLoaded", () => {
     showAuthPrompt(true);
   });
 
+  let googleSignInReady = false;
+  let googleRenderedMode = "";
+  let googleRenderedWidth = 0;
+
   function selectAuthMode(mode) {
     const selectedMode = ["login", "signup", "reset"].includes(mode) ? mode : "login";
     const title = document.getElementById("login-title");
@@ -807,6 +811,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-auth-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.authPanel !== selectedMode;
     });
+
+    const googleWrap = document.querySelector("[data-google-auth]");
+    if (googleWrap) googleWrap.hidden = selectedMode === "reset";
+    if (googleSignInReady && selectedMode !== "reset") renderGoogleButton(selectedMode);
   }
 
   document.querySelectorAll("[data-auth-tab]").forEach((tab) => {
@@ -1081,6 +1089,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function renderGoogleButton(mode = "login") {
+    const googleButton = document.getElementById("google-signin");
+    const shell = googleButton?.closest(".google-button-shell");
+    if (!googleSignInReady || !googleButton || !shell || shell.offsetParent === null) return;
+
+    const width = Math.max(200, Math.min(400, Math.floor(shell.getBoundingClientRect().width)));
+    if (googleRenderedMode === mode && Math.abs(googleRenderedWidth - width) < 4 && googleButton.childElementCount) return;
+
+    googleButton.replaceChildren();
+    window.google.accounts.id.renderButton(googleButton, {
+      type: "standard",
+      theme: "filled_black",
+      size: "large",
+      text: mode === "signup" ? "signup_with" : "signin_with",
+      shape: "rectangular",
+      logo_alignment: "left",
+      width,
+    });
+    googleRenderedMode = mode;
+    googleRenderedWidth = width;
+  }
+
   async function setupGoogleSignIn() {
     const googleButton = document.getElementById("google-signin");
     const googleHint = document.getElementById("google-signin-hint");
@@ -1101,13 +1131,19 @@ document.addEventListener("DOMContentLoaded", () => {
         cancel_on_tap_outside: true,
         ux_mode: "popup",
       });
-      window.google.accounts.id.renderButton(googleButton, {
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        width: Math.min(420, googleButton.parentElement?.clientWidth || 360),
-      });
+      googleSignInReady = true;
+      const activeMode = document.querySelector("[data-auth-tab].is-active")?.dataset.authTab || "login";
+      renderGoogleButton(activeMode);
       if (googleHint) googleHint.textContent = "";
+
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+          const mode = document.querySelector("[data-auth-tab].is-active")?.dataset.authTab || "login";
+          renderGoogleButton(mode);
+        }, 140);
+      }, { passive: true });
     } catch {
       if (googleHint) googleHint.textContent = "Google sign-in could not load.";
     }

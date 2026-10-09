@@ -799,6 +799,65 @@ body::after {
   background: rgba(255, 255, 255, 0.025);
 }
 
+.google-login-wrap {
+  width: 100%;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+
+.google-login-wrap[hidden] {
+  display: none;
+}
+
+.google-button-shell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+#google-signin,
+#google-signin > div {
+  display: grid;
+  place-items: center;
+  max-width: 100%;
+}
+
+#google-signin iframe {
+  max-width: 100% !important;
+  color-scheme: light;
+}
+
+#google-signin-hint {
+  margin: 0;
+  text-align: center;
+}
+
+#google-signin-hint:empty {
+  display: none;
+}
+
+.auth-divider {
+  display: grid;
+  grid-template-columns: minmax(20px, 1fr) auto minmax(20px, 1fr);
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--space-line);
+}
+
 .product-back,
 .auth-text-button {
   color: var(--cyan);
