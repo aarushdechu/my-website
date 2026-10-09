@@ -9,7 +9,7 @@ const SHOP_CATEGORIES = [
   {
     name: "Origami",
     emoji: "O",
-    desc: "Handmade paper folds, sorted like project folders.",
+    desc: "Handmade paper folds.",
     accent: "#efbd52",
     deep: "#d9962d",
     items: [
@@ -214,7 +214,7 @@ const SHOP_CATEGORIES = [
   {
     name: "Other",
     emoji: "N",
-    desc: "A spot for future ideas.",
+    desc: "Websites and other projects.",
     accent: "#7fd0c4",
     deep: "#3aaea1",
     items: [
@@ -227,8 +227,8 @@ const SHOP_CATEGORIES = [
       },
       {
         emoji: "+",
-        name: "More coming soon",
-        desc: "Aarush will add more items here later.",
+        name: "In progress",
+        desc: "This section is still being built.",
         status: "soon",
       },
     ],

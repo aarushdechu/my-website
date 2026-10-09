@@ -17,7 +17,8 @@ Private settings belong in `.env`. Start from `.env.example`; never commit `.env
 
 - Shop products: `js/shop-catalog.js`
 - Shared behavior: `js/main.js`
-- Site styling: `css/style.css`
+- Base styling: `css/style.css`
+- Space theme and visual polish: `css/space-theme.css`
 - Page content: the HTML files in the project root
 - Backend and APIs: `server.py`
 - Product photos: `images/shop/`

@@ -9,14 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Rock+Salt&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/space-theme.css" />
 </head>
 <body class="shop-page product-page">
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap nav">
-      <a class="brand" href="index.html"><span class="mark">✦</span> Aarush</a>
-      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">☰</button>
+      <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span> Aarush</a>
+      <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-navigation">Menu</button>
       <ul class="nav-links" id="primary-navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="shop.html" aria-current="page">Shop</a></li>
@@ -36,12 +37,14 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <span>Made with paper, pixels, and hot chocolate by Aarush.</span>
+      <button class="footer-signal" type="button" data-secret-signal>Signal 03.14</button>
+      <span>Built by Aarush Dechu.</span>
       <span>© <span data-year>2026</span> Aarush Dechu</span>
     </div>
   </footer>
 
   <script src="js/shop-catalog.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/space-theme.js"></script>
 </body>
 </html>

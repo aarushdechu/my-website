@@ -17,8 +17,10 @@
 | Path | Purpose |
 | --- | --- |
 | `css/style.css` | All shared styling and responsive rules |
+| `css/space-theme.css` | Space theme, components, and visual overrides |
 | `js/shop-catalog.js` | Product names, descriptions, images, and folders |
 | `js/main.js` | Navigation, shop rendering, cart, accounts, and shared UI |
+| `js/space-theme.js` | Animated starfield, title signal, and hidden interactions |
 | `js/math-brain.js` | Quadratic's browser-side math behavior |
 | `js/quadratic-config.js` | Safe public Quadratic settings; never store API keys here |
 

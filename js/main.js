@@ -645,9 +645,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.innerHTML = `
       <div class="auth-modal__backdrop" data-auth-dismiss></div>
       <section class="auth-modal__card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-        <span class="eyebrow">Member bonus</span>
-        <h2 id="auth-modal-title">Log in or sign up for more</h2>
-        <p>Make an account to save your profile and keep the website feeling more personal.</p>
+        <span class="eyebrow">Account</span>
+        <h2 id="auth-modal-title">Log in or sign up</h2>
+        <p>Accounts are used for profiles and visitor stats.</p>
         <div class="auth-modal__actions">
           <a class="btn btn--coral" href="login.html?mode=signup">Sign up</a>
           <a class="btn btn--ghost" href="login.html">Log in</a>
